@@ -1,51 +1,231 @@
 /**
- * © 2025 Black Hunter - Todos os Direitos Reservados.
+ * 2025 Black Hunter - Todos os Direitos Reservados.
  * 
  * Tela de Login.
  */
 
+import WRScreenContainer from "@/components/wrappers/WRScreenContainer";
 import WRText from "@/components/wrappers/WRText";
 import { useAuth } from "@/context/auth-context";
+import { useAppTheme } from "@/context/theme-context";
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, router } from "expo-router";
 import { useState } from "react";
-import { Alert, Button, TextInput, View } from "react-native";
+import { 
+  Alert, 
+  Dimensions, 
+  KeyboardAvoidingView, 
+  Platform, 
+  Pressable, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  View 
+} from "react-native";
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const { signIn } = useAuth();
+    const { theme, isDark } = useAppTheme();
   
     const handleLogin = async () => {
+      if (!email || !password) {
+        Alert.alert('Atenção', 'Por favor, preencha todos os campos.');
+        return;
+      }
+      
       try {
+        setIsLoading(true);
         await signIn(email, password);
         router.replace('../../../authenticated/(tabs)/home');
       } catch (error) {
-        Alert.alert('Erro', 'Falha no login: ' + error);
+        Alert.alert('Erro', 'Falha no login. Verifique suas credenciais e tente novamente.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
+    const togglePasswordVisibility = () => {
+      setIsPasswordVisible(!isPasswordVisible);
+    };
+
     return (
-        <>
-            <View style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
-                <WRText style={{ fontSize: 24, marginBottom: 20 }}>Login</WRText>
-                <TextInput
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                    style={{ marginBottom: 10, padding: 10, borderWidth: 1 }}
-                />
-                <TextInput
-                    placeholder="Senha"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    style={{ marginBottom: 10, padding: 10, borderWidth: 1 }}
-                />
-                <Button title="Entrar" onPress={handleLogin} />
-                <Link href={"../register/register"} asChild>
-                    <WRText style={{ marginTop: 15, color: 'blue' }}>Criar uma conta</WRText>
-                </Link>
+      <WRScreenContainer style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <WRText style={[styles.title, { color: theme.colors.primary }]}>
+                Bem-vindo de volta!
+              </WRText>
+              <WRText style={[styles.subtitle, { color: theme.colors.muted }]}>
+                Faça login para continuar
+              </WRText>
             </View>
-        </>
-    )
+
+            <View style={styles.form}>
+              <View style={[
+                styles.inputContainer, 
+                { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }
+              ]}>
+                <TextInput
+                  placeholder="Email"
+                  placeholderTextColor={theme.colors.muted}
+                  value={email}
+                  onChangeText={setEmail}
+                  style={[styles.input, { color: theme.colors.text }]}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={[
+                styles.inputContainer, 
+                { 
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                  marginTop: 16
+                }
+              ]}>
+                <TextInput
+                  placeholder="Senha"
+                  placeholderTextColor={theme.colors.muted}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!isPasswordVisible}
+                  style={[styles.input, { color: theme.colors.text }]}
+                />
+                <TouchableOpacity 
+                  onPress={togglePasswordVisibility}
+                  style={styles.visibilityIcon}
+                >
+                  <WRText style={{ color: theme.colors.primary }}>
+                    {isPasswordVisible ? 'Esconder' : 'Mostrar'}
+                  </WRText>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.forgotPassword}
+                onPress={() => {}}
+              >
+                <WRText style={{ color: theme.colors.primary, fontSize: 14 }}>
+                  Esqueceu sua senha?
+                </WRText>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={handleLogin}
+                disabled={isLoading}
+                style={styles.loginButton}
+              >
+                <LinearGradient
+                  colors={theme.colors.primaryGradient as [string, string]}
+                  style={styles.gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <WRText style={styles.loginButtonText}>
+                    {isLoading ? 'Entrando...' : 'Entrar'}
+                  </WRText>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.footer}>
+              <WRText style={{ color: theme.colors.muted }}>
+                Não tem uma conta?{' '}
+              </WRText>
+              <Link href={"../register/register"} asChild>
+                <Pressable>
+                  <WRText style={{ color: theme.colors.primary, fontWeight: '600' }}>
+                    Cadastre-se
+                  </WRText>
+                </Pressable>
+              </Link>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </WRScreenContainer>
+    );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+  },
+  header: {
+    marginBottom: 48,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  form: {
+    width: '100%',
+  },
+  inputContainer: {
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
+    justifyContent: 'center',
+  },
+  input: {
+    fontSize: 16,
+    width: '100%',
+    paddingVertical: 16,
+  },
+  visibilityIcon: {
+    position: 'absolute',
+    right: 16,
+    padding: 8,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  loginButton: {
+    width: '100%',
+    height: 56,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  gradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+});

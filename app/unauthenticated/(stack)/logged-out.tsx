@@ -1,9 +1,153 @@
+import WRScreenContainer from "@/components/wrappers/WRScreenContainer";
 import WRText from "@/components/wrappers/WRText";
+import { useAppTheme } from "@/context/theme-context";
+import { LinearGradient } from 'expo-linear-gradient';
+import { Stack, useRouter } from "expo-router";
+import { StyleSheet, View, Image, Dimensions } from "react-native";
+import { TouchableOpacity } from "react-native";
+
+const { width } = Dimensions.get('window');
 
 export default function LoggedOutScreen() {
+    const { theme, isDark } = useAppTheme();
+    const router = useRouter();
+
+    const handleLogin = () => {
+        router.push("./login/login");
+    };
+
+    const handleRegister = () => {
+        router.push("./register/register");
+    };
+
     return (
         <>
-            <WRText>Tela quando usuário está completamente deslogado.</WRText>
+            <Stack.Screen options={{ headerShown: false }} />
+            <WRScreenContainer style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <View style={styles.content}>
+                    {/* Logo/Branding */}
+                    <View style={styles.logoContainer}>
+                        <View style={[styles.logo, { backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+                            <WRText style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>BH</WRText>
+                        </View>
+                        <WRText style={[styles.title, { color: theme.colors.primary }]}>
+                            Black Hunter
+                        </WRText>
+                        <WRText style={[styles.subtitle, { color: theme.colors.muted }]}>
+                            Sua carteira digital segura e prática
+                        </WRText>
+                    </View>
+
+                    {/* Buttons */}
+                    <View style={styles.buttonsContainer}>
+                        <TouchableOpacity 
+                            onPress={handleLogin}
+                            style={styles.primaryButton}
+                        >
+                            <LinearGradient
+                                colors={theme.colors.primaryGradient as [string, string]}
+                                style={styles.gradient}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                            >
+                                <WRText style={styles.primaryButtonText}>
+                                    Entrar
+                                </WRText>
+                            </LinearGradient>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            onPress={handleRegister}
+                            style={[styles.secondaryButton, { borderColor: theme.colors.primary }]}
+                        >
+                            <WRText style={[styles.secondaryButtonText, { color: theme.colors.primary }]}>
+                                Criar Conta
+                            </WRText>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Footer */}
+                    <View style={styles.footer}>
+                        <WRText style={[styles.footerText, { color: theme.colors.muted }]}>
+                            2025 Black Hunter. Todos os direitos reservados.
+                        </WRText>
+                    </View>
+                </View>
+            </WRScreenContainer>
         </>
     )
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    content: {
+        flex: 1,
+        padding: 24,
+        justifyContent: 'space-between',
+    },
+    logoContainer: {
+        alignItems: 'center',
+        marginTop: 60,
+    },
+    logo: {
+        width: 120,
+        height: 120,
+        marginBottom: 16,
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    subtitle: {
+        fontSize: 16,
+        textAlign: 'center',
+        maxWidth: '80%',
+        lineHeight: 24,
+    },
+    buttonsContainer: {
+        width: '100%',
+        marginBottom: 40,
+    },
+    primaryButton: {
+        width: '100%',
+        height: 56,
+        borderRadius: 12,
+        overflow: 'hidden',
+        marginBottom: 16,
+    },
+    gradient: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    primaryButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    secondaryButton: {
+        width: '100%',
+        height: 56,
+        borderRadius: 12,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    secondaryButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    footer: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    footerText: {
+        fontSize: 12,
+        textAlign: 'center',
+        opacity: 0.7,
+    },
+});

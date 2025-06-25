@@ -6,31 +6,34 @@
  * É ESTRITAMENTE PROIBIDO ALTERAR ESTE ARQUIVO SEM AUTORIZAÇÃO PRÉVIA DE UM CODEOWNER.
  */
 
+import { login } from '@/service/service.auth';
 import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type AuthContextData = {
-  user: string | null;
+  authToken: string | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
 };
 
+const AUTH_TOKEN = "authToken";
+
 const AuthContext = createContext<AuthContextData | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadUser() {
       // apenas para desenvolvimento
-      await SecureStore.deleteItemAsync('user'); 
+      await SecureStore.deleteItemAsync(AUTH_TOKEN); 
     
-      const storedUser = await SecureStore.getItemAsync('user');
-      if (storedUser) {
-        setUser(storedUser);
+      const storedAuthToken = await SecureStore.getItemAsync(AUTH_TOKEN);
+      if (storedAuthToken) {
+        setAuthToken(storedAuthToken);
       }
       setLoading(false);
     }
@@ -39,24 +42,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function signIn(email: string, password: string) {
-    // Here you would implement real authentication logic
-    await SecureStore.setItemAsync('user', email);
-    setUser(email);
+    const token: string = await login({email, password});
+    await SecureStore.setItemAsync(AUTH_TOKEN, token);
+    setAuthToken(token);
   }
 
   async function signOut() {
-    await SecureStore.deleteItemAsync('user');
-    setUser(null);
+    await SecureStore.deleteItemAsync(AUTH_TOKEN);
+    setAuthToken(null);
   }
 
   async function signUp(email: string, password: string) {
     // Registration logic
-    await SecureStore.setItemAsync('user', email);
-    setUser(email);
+    await SecureStore.setItemAsync(AUTH_TOKEN, email);
+    setAuthToken(email);
   }
 
   const value = {
-    user,
+    authToken,
     loading,
     signIn,
     signOut,

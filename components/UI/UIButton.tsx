@@ -19,7 +19,7 @@ interface ButtonProps {
 }
 
 /**
- * UIButton - Um componente de botão redondo responsivo
+ * UIButton - A responsive round button component
  * 
  * @param props ButtonProps
  * @returns React.JSX.Element
