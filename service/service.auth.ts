@@ -1,15 +1,20 @@
+import { BASE_URL, SECRET_KEY } from "@/constants/contants.api";
 import AuthChallenge from "@/types/AuthChallenge";
 import AuthCredentials from "@/types/AuthCredentials";
+import AuthResponse from "@/types/AuthResponse";
 import axios from 'axios';
+import { decode as atob } from 'base-64';
 import CryptoJS from 'crypto-js';
+import * as SecureStore from 'expo-secure-store';
 
-const BACKEND_URL = "http://10.0.2.2:8080"
-const API_VERSION = "/v1";
-const BASE_URL = BACKEND_URL + API_VERSION;
-const SECRET_KEY = "BlackHunterDefaultSecret";
+if (!global.atob) {
+  global.atob = atob;
+}
+
 const DEVICE_ID = "dev";
+const AUTH_OBJECT_KEY = "authObject";
 
-export async function login(credentials: AuthCredentials): Promise<string>  {
+export async function login(credentials: AuthCredentials): Promise<AuthResponse>  {
     try {
     // Obtém o desafio e gera a assinatura
     const { nonce, signature, deviceId } = await getChallenge();
@@ -20,15 +25,6 @@ export async function login(credentials: AuthCredentials): Promise<string>  {
       password: credentials.password
     };
 
-    console.log(`Enviando login para: ${BASE_URL}/public/auth`)
-    console.log(`Com body: ${JSON.stringify(requestBody)}`)
-    console.log(`Com headers: ${JSON.stringify({
-      'Content-Type': 'application/json',
-      'X-Device-ID': deviceId,
-      'X-APP-Signature': signature,
-      'X-Nonce': nonce
-    })}`)
-    
     // Realiza a requisição de autenticação
     const response = await axios.post(
       `${BASE_URL}/public/auth`,
@@ -46,12 +42,11 @@ export async function login(credentials: AuthCredentials): Promise<string>  {
     if (response.data.status !== 'success') {
       throw new Error('Falha na autenticação');
     }
-    
-    const token = response.data.data;
-    console.log('Autenticação bem-sucedida!');
-    console.log(`Token JWT: ${token}`);
-    
-    return token;
+
+    const authToken = response.data.data;
+    return {
+      nonce, signature, deviceId, authToken
+    };
   } catch (error: any) {
     console.error('Erro na autenticação:', error.message);
     if (error.response) {
@@ -61,9 +56,53 @@ export async function login(credentials: AuthCredentials): Promise<string>  {
   }
 }
 
+export async function getAuthObjectStore(): Promise<AuthResponse | null> {
+  const authJson = await SecureStore.getItemAsync(AUTH_OBJECT_KEY);
+  return authJson ? JSON.parse(authJson) : null;
+}
+
+export async function saveAuthObjectStore(object: AuthResponse) {
+  SecureStore.setItem(AUTH_OBJECT_KEY, JSON.stringify(object));
+}
+
+export async function deleteAuthObjectStore() {
+  await SecureStore.deleteItemAsync(AUTH_OBJECT_KEY); 
+}
+
+export function getRequestHeader(authObject: AuthResponse | null) {
+  return {
+      'Content-Type': 'application/json',
+      'X-Device-ID': authObject?.deviceId,
+      'X-APP-Signature': authObject?.signature,
+      'X-Nonce': authObject?.nonce,
+      'Authorization': `Bearer ${authObject?.authToken}` 
+  }
+}
+
+export async function isUserAuthenticated(): Promise<boolean> {
+  const authData = await getAuthObjectStore();
+  console.log(authData);
+  return authData != null && isAuthTokenNotExpired(authData.authToken); 
+}
+
+function isAuthTokenNotExpired(token: string): boolean {
+    try {
+    const payloadBase64 = token.split('.')[1];
+    const payloadJson = atob(payloadBase64);
+    const payload = JSON.parse(payloadJson);
+
+    if (!payload.exp) return false;
+
+    const now = Math.floor(Date.now() / 1000); // tempo atual em segundos
+    return payload.exp > now;
+  } catch (error) {
+    console.error('Erro ao verificar token:', error);
+    return false;
+  }
+}
+
 async function getChallenge(): Promise<AuthChallenge> {
   try {
-    console.log(`Enviando desafio para: ${BASE_URL}/public/challenge`)
     const response = await axios.get(`${BASE_URL}/public/challenge`);
     
     if (response.data.status !== 'success') {
@@ -74,14 +113,8 @@ async function getChallenge(): Promise<AuthChallenge> {
     const nonce = challenge.nonce;
     const expiresAt = challenge.expiresAt;
     
-    console.log('Desafio obtido com sucesso:');
-    console.log(`Nonce: ${nonce}`);
-    console.log(`Expira em: ${new Date(expiresAt).toLocaleString()}`);
-    
     // Gera a assinatura HMAC
     const signature = generateSignature(nonce, SECRET_KEY);
-    
-    console.log(`Assinatura gerada: ${signature}`);
     
     return {
       nonce,

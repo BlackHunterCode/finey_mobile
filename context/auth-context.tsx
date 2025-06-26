@@ -6,34 +6,31 @@
  * É ESTRITAMENTE PROIBIDO ALTERAR ESTE ARQUIVO SEM AUTORIZAÇÃO PRÉVIA DE UM CODEOWNER.
  */
 
-import { login } from '@/service/service.auth';
-import * as SecureStore from 'expo-secure-store';
+import { deleteAuthObjectStore, getAuthObjectStore, login, saveAuthObjectStore } from '@/service/service.auth';
+import AuthResponse from '@/types/AuthResponse';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type AuthContextData = {
-  authToken: string | null;
+  authObject: AuthResponse | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
 };
-
-const AUTH_TOKEN = "authToken";
 
 const AuthContext = createContext<AuthContextData | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [authObject, setAuthObject] = useState<AuthResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadUser() {
       // apenas para desenvolvimento
-      await SecureStore.deleteItemAsync(AUTH_TOKEN); 
+     await deleteAuthObjectStore();
     
-      const storedAuthToken = await SecureStore.getItemAsync(AUTH_TOKEN);
+      const storedAuthToken = await getAuthObjectStore();
       if (storedAuthToken) {
-        setAuthToken(storedAuthToken);
+        setAuthObject(storedAuthToken);
       }
       setLoading(false);
     }
@@ -42,28 +39,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function signIn(email: string, password: string) {
-    const token: string = await login({email, password});
-    await SecureStore.setItemAsync(AUTH_TOKEN, token);
-    setAuthToken(token);
+    try {
+      const authResponse: AuthResponse = await login({email, password});
+      await saveAuthObjectStore(authResponse);
+      setAuthObject(authResponse);
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
   }
 
   async function signOut() {
-    await SecureStore.deleteItemAsync(AUTH_TOKEN);
-    setAuthToken(null);
+    await deleteAuthObjectStore();
+    setAuthObject(null);
   }
 
-  async function signUp(email: string, password: string) {
-    // Registration logic
-    await SecureStore.setItemAsync(AUTH_TOKEN, email);
-    setAuthToken(email);
-  }
 
   const value = {
-    authToken,
+    authObject,
     loading,
     signIn,
-    signOut,
-    signUp,
+    signOut
   };
 
   return (
