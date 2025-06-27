@@ -48,10 +48,7 @@ export async function login(credentials: AuthCredentials): Promise<AuthResponse>
       nonce, signature, deviceId, authToken
     };
   } catch (error: any) {
-    console.error('Erro na autenticação:', error.message);
-    if (error.response) {
-      console.error('Resposta do servidor:', error.response.data);
-    }
+    // Authentication error
     throw error;
   }
 }
@@ -81,7 +78,7 @@ export function getRequestHeader(authObject: AuthResponse | null) {
 
 export async function isUserAuthenticated(): Promise<boolean> {
   const authData = await getAuthObjectStore();
-  console.log(authData);
+  // authData is logged here
   return authData != null && isAuthTokenNotExpired(authData.authToken); 
 }
 
@@ -96,7 +93,7 @@ function isAuthTokenNotExpired(token: string): boolean {
     const now = Math.floor(Date.now() / 1000); // tempo atual em segundos
     return payload.exp > now;
   } catch (error) {
-    console.error('Erro ao verificar token:', error);
+    // Error checking token
     return false;
   }
 }
@@ -123,10 +120,7 @@ async function getChallenge(): Promise<AuthChallenge> {
       deviceId: DEVICE_ID
     };
   } catch (error: any) {
-    console.error('Erro ao obter desafio:', error.message);
-    if (error.response) {
-      console.error('Resposta do servidor:', error.response.data);
-    }
+    // Error getting challenge
     throw error;
   }
 }

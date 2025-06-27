@@ -44,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await saveAuthObjectStore(authResponse);
       setAuthObject(authResponse);
     } catch (error) {
-      console.error('Sign in error:', error);
       throw error;
     }
   }

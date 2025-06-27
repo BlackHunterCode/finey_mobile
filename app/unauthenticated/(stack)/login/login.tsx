@@ -11,23 +11,23 @@ import { useAppTheme } from "@/context/theme-context";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, router } from "expo-router";
 import { useState } from "react";
-import { 
-  Alert, 
-  Dimensions, 
-  KeyboardAvoidingView, 
-  Platform, 
-  Pressable, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  View 
+import {
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('takashi.yui@gmail.com');
+    const [password, setPassword] = useState('DarkLover123');
     const [isLoading, setIsLoading] = useState(false);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const { signIn } = useAuth();

@@ -104,8 +104,6 @@ export default function UICard({
                 // Tenta navegar usando o router.push
                 router.push(href as any);
             } catch (error) {
-                console.error('Navigation error:', error);
-                
                 // Fallback: tenta diferentes formatos de rota se o primeiro falhar
                 if (href.startsWith('./')) {
                     // Remove o ./ e tenta novamente
