@@ -3,8 +3,7 @@ import WRText from "@/components/wrappers/WRText";
 import { useAppTheme } from "@/context/theme-context";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from "expo-router";
-import { StyleSheet, View, Image, Dimensions } from "react-native";
-import { TouchableOpacity } from "react-native";
+import { Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
 
 const { width } = Dimensions.get('window');
 
@@ -22,16 +21,16 @@ export default function LoggedOutScreen() {
 
     return (
         <>
-            <Stack.Screen options={{ headerShown: false }} />
+            <Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: theme.colors.background } }} />
             <WRScreenContainer style={[styles.container, { backgroundColor: theme.colors.background }]}>
                 <View style={styles.content}>
                     {/* Logo/Branding */}
                     <View style={styles.logoContainer}>
                         <View style={[styles.logo, { backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
-                            <WRText style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>BH</WRText>
+                            <WRText style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>FN</WRText>
                         </View>
                         <WRText style={[styles.title, { color: theme.colors.primary }]}>
-                            Black Hunter
+                            Finey
                         </WRText>
                         <WRText style={[styles.subtitle, { color: theme.colors.muted }]}>
                             Sua carteira digital segura e prática
@@ -69,7 +68,7 @@ export default function LoggedOutScreen() {
                     {/* Footer */}
                     <View style={styles.footer}>
                         <WRText style={[styles.footerText, { color: theme.colors.muted }]}>
-                            2025 Black Hunter. Todos os direitos reservados.
+                            2025 Finey. Todos os direitos reservados.
                         </WRText>
                     </View>
                 </View>

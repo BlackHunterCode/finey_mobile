@@ -13,7 +13,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 type AuthContextData = {
   authObject: AuthResponse | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<AuthResponse>;
   signOut: () => Promise<void>;
 };
 
@@ -25,9 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function loadUser() {
-      // apenas para desenvolvimento
-     await deleteAuthObjectStore();
-    
+      // Carrega o token de autenticação armazenado
       const storedAuthToken = await getAuthObjectStore();
       if (storedAuthToken) {
         setAuthObject(storedAuthToken);
@@ -38,11 +36,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
   }, []);
 
-  async function signIn(email: string, password: string) {
+  async function signIn(email: string, password: string): Promise<AuthResponse> {
     try {
       const authResponse: AuthResponse = await login({email, password});
       await saveAuthObjectStore(authResponse);
       setAuthObject(authResponse);
+      return authResponse;
     } catch (error) {
       throw error;
     }

@@ -25,6 +25,7 @@ export async function login(credentials: AuthCredentials): Promise<AuthResponse>
       password: credentials.password
     };
 
+
     // Realiza a requisição de autenticação
     const response = await axios.post(
       `${BASE_URL}/public/auth`,
@@ -39,6 +40,7 @@ export async function login(credentials: AuthCredentials): Promise<AuthResponse>
       }
     );
     
+
     if (response.data.status !== 'success') {
       throw new Error('Falha na autenticação');
     }
@@ -54,16 +56,29 @@ export async function login(credentials: AuthCredentials): Promise<AuthResponse>
 }
 
 export async function getAuthObjectStore(): Promise<AuthResponse | null> {
-  const authJson = await SecureStore.getItemAsync(AUTH_OBJECT_KEY);
-  return authJson ? JSON.parse(authJson) : null;
+  try {
+    const authJson = await SecureStore.getItemAsync(AUTH_OBJECT_KEY);
+    return authJson ? JSON.parse(authJson) : null;
+  } catch (error) {
+    console.error('Erro ao recuperar authObject:', error);
+    return null;
+  }
 }
 
 export async function saveAuthObjectStore(object: AuthResponse) {
-  SecureStore.setItem(AUTH_OBJECT_KEY, JSON.stringify(object));
+  try {
+    await SecureStore.setItem(AUTH_OBJECT_KEY, JSON.stringify(object));
+  } catch (error) {
+    console.error('Erro ao salvar authObject:', error);
+  }
 }
 
 export async function deleteAuthObjectStore() {
-  await SecureStore.deleteItemAsync(AUTH_OBJECT_KEY); 
+  try {
+    await SecureStore.deleteItemAsync(AUTH_OBJECT_KEY);
+  } catch (error) {
+    console.error('Erro ao remover authObject:', error);
+  }
 }
 
 export function getRequestHeader(authObject: AuthResponse | null) {
@@ -78,7 +93,6 @@ export function getRequestHeader(authObject: AuthResponse | null) {
 
 export async function isUserAuthenticated(): Promise<boolean> {
   const authData = await getAuthObjectStore();
-  // authData is logged here
   return authData != null && isAuthTokenNotExpired(authData.authToken); 
 }
 
@@ -100,7 +114,7 @@ function isAuthTokenNotExpired(token: string): boolean {
 
 async function getChallenge(): Promise<AuthChallenge> {
   try {
-    const response = await axios.get(`${BASE_URL}/public/challenge`);
+    const response = await axios.get(`${BASE_URL}/public/challenge`, {timeout: 10000});
     
     if (response.data.status !== 'success') {
       throw new Error('Falha ao obter desafio');

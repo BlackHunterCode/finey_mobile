@@ -1,12 +1,11 @@
 import { BASE_URL } from "@/constants/contants.api";
 import AuthResponse from "@/types/AuthResponse";
-import FinIntegratorConToken from "@/types/FinIntegratorConToken";
 import { CryptUtil } from "@/utils/CryptoUtil";
 import getFinancialIntegratorWebView from "@/webview/financial-integrations/FinancialIntegratorWebViewManager";
 import axios from 'axios';
 import Constants from 'expo-constants';
 import { JSX } from "react";
-import { getRequestHeader, isUserAuthenticated } from "./service.auth";
+import { getAuthObjectStore, getRequestHeader, isUserAuthenticated } from "./service.auth";
 
 const secretKey: string | undefined = Constants.expoConfig?.extra?.PLUGGY_CRYPT_SECRET;
 if (!secretKey) {
@@ -36,7 +35,8 @@ interface ConnectTokenResponse {
 }
 
 export async function getConnectToken(authObject: AuthResponse | null): Promise<ConnectTokenResponse | null> {
-    if (!(await isUserAuthenticated())) {
+    // Se o usuário não estiver autenticado e não tiver um authObject, retorna null
+    if (!authObject && !(await isUserAuthenticated())) {
         return null;
     }
     
@@ -63,18 +63,20 @@ export async function getConnectToken(authObject: AuthResponse | null): Promise<
             status: 'success'
         };
     } catch (error) {
-        throw error;
+      console.error(error)
+      throw error;
     }
 }
 
-// In service.financial-integrator.ts
 export async function connectToBank({
   authObject,
   onSuccess,
   onError,
 }: ConnectToBankParams): Promise<JSX.Element | null> {
   try {
-    const data = await getConnectToken(authObject);
+    // Se o authObject for nulo, tenta obter do armazenamento seguro
+    const auth = authObject || await getAuthObjectStore();
+    const data = await getConnectToken(auth);
     if (!data) {
       throw new Error('No data received from getConnectToken');
     }
@@ -85,28 +87,22 @@ export async function connectToBank({
     if (!connectToken) {
       throw new Error('No connect token available');
     }
-
-
     
     if (!secretKey) {
       throw new Error('Chave de criptografia não configurada. Verifique as variáveis de ambiente.');
     }
 
-    // Decrypt the token received from the API
     let decryptedToken: string;
     try {
       decryptedToken = CryptUtil.decrypt(connectToken, secretKey);
-      // Token decrypted successfully
     } catch (error) {
-      // Failed to decrypt token
       throw new Error('Falha ao descriptografar o token de conexão');
     }
 
     const financialIntegratorWebView = getFinancialIntegratorWebView(platform);
     
-
-    
     return financialIntegratorWebView.connect({
+    authObject: auth, // Usando a variável auth em vez de authObject
     connectToken: decryptedToken,
     onSuccess: (itemId: string) => {
       onSuccess(itemId);
