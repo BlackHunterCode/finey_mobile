@@ -34,9 +34,9 @@ export default function ConnectBankScreen() {
                     type: ToastType.SUCCESS
                 });
                 pushToSplashScreen({
-                    onRouterSuccess: "../../(tabs)/home" as const,
+                    onRouterSuccess: "/authenticated/(tabs)/home",
                     message: "Redirecionando para a tela inicial...",
-                    processingTime: 1500
+                    processingTime: 5500
                 })
             },
             onError: (err) => {

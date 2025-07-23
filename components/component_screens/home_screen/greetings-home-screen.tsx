@@ -1,10 +1,10 @@
+import WRText from "@/components/wrappers/WRText";
 import { useAuth } from "@/context/auth-context";
 import { useAppTheme } from "@/context/theme-context";
 import { getUserInfo } from "@/service/service.user";
 import UserInfo from "@/types/UserInfo";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import WRText from "@/components/wrappers/WRText";
 
 export default function GreetingsHomeScreen() {
     const [userName, setUserName] = useState<string>("");
@@ -30,7 +30,7 @@ export default function GreetingsHomeScreen() {
                 {getGreeting()}, {userName || "usuário"}!
             </WRText>
             <WRText style={[styles.welcomeText, { color: theme.colors.muted }]}>
-                Bem-vindo ao Finey
+                Bem-vindo(a) ao Finey
             </WRText>
         </View>
     );
