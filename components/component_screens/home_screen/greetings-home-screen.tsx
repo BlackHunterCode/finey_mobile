@@ -50,7 +50,6 @@ function getGreeting(): string {
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
         marginBottom: 16,
     },
     greeting: {

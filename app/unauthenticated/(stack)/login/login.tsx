@@ -10,9 +10,12 @@ import WRText from "@/components/wrappers/WRText";
 import { ToastType } from "@/constants/constants.toast";
 import { useAuth } from "@/context/auth-context";
 import { useNavigation } from "@/context/navigation-context";
+import { useReferenceDate } from "@/context/reference-date-context";
 import { useAppTheme } from "@/context/theme-context";
 import { useToast } from "@/context/toast-context";
+import { useTotalTransactionPeriod } from "@/context/transaction/total-transaction-period-context";
 import { getAuthObjectStore } from "@/service/service.auth";
+import { loadTotalTransactionPeriod } from "@/service/service.transaction";
 import { getUserInfo } from "@/service/service.user";
 import AuthResponse from "@/types/AuthResponse";
 import UserInfo from "@/types/UserInfo";
@@ -42,10 +45,32 @@ export default function LoginScreen() {
     const { theme, isDark } = useAppTheme();
     const { showToast } = useToast();
     const { pushToSplashScreen } = useNavigation();
-  
+    const { referenceDate } = useReferenceDate();
+    const { setTotalTransactionPeriod } = useTotalTransactionPeriod();
+
     const handlePriorities = async (authResponse: AuthResponse) => {
-      const userInfo: UserInfo | null = await getUserInfo(authResponse);
-      if(userInfo && userInfo.connectedBanks.length === 0) {
+      let userInfo: UserInfo | null = null;
+      try {
+        userInfo = await getUserInfo(authResponse);
+      } catch(err: any) {
+        showToast({
+          message: "Ocorreu um erro ao puxar os dados do usuário. O suporte foi acionado.",
+          type: ToastType.ERROR,
+          suport: {
+            errorObject: err
+          }
+        })
+      }
+
+      if(!userInfo) {
+        showToast({
+          message: "Ocorreu um erro ao puxar os dados do usuário. Contate o suporte.",
+          type: ToastType.ERROR
+        })
+        return;
+      }
+    
+      if(userInfo.connectedBanks.length === 0) {
         pushToSplashScreen({
           onRouterSuccess: '../../../authenticated/connect-bank/(stack)/connect-bank' as const,
           processingTime: 4500
@@ -54,6 +79,17 @@ export default function LoginScreen() {
       else {
         pushToSplashScreen({
           onRouterSuccess: '../../../authenticated/(tabs)/home' as const,
+          onProcess: async () => {
+            const result = await loadTotalTransactionPeriod(
+              userInfo.connectedBanks,
+              referenceDate,
+              authResponse,
+              true // considera os cartões de crédito.
+            );
+            if (result) {
+              setTotalTransactionPeriod(result);
+            }
+          },
           processingTime: 4500
         });
       }

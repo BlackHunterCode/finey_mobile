@@ -19,7 +19,15 @@ interface UISelectProps {
     error?: boolean;
     errorMessage?: string;
     children?: React.ReactNode;
-    style?: StyleProp<ViewStyle>; 
+    style?: StyleProp<ViewStyle>;
+    // Propriedades para seleção múltipla
+    multiple?: boolean;
+    selectedValues?: any[];
+    onMultipleChange?: (values: any[]) => void;
+    selectAllByDefault?: boolean;
+    minSelected?: number;
+    maxSelected?: number;
+    showSelectAll?: boolean;
 }
 
 /**
@@ -37,26 +45,92 @@ export default function UISelect({
     disabled = false,
     error = false,
     errorMessage = "",
-    children
+    children,
+    multiple = false,
+    selectedValues = [],
+    onMultipleChange,
+    selectAllByDefault = false,
+    minSelected = 0,
+    maxSelected,
+    showSelectAll = true
 }: UISelectProps) {
     const { theme } = useAppTheme();
     const [isOpen, setIsOpen] = useState(false);
     const [selectedOption, setSelectedOption] = useState<SelectOption | null>(null);
+    const [multipleSelectedValues, setMultipleSelectedValues] = useState<any[]>([]);
     const modalHeight = Dimensions.get('window').height * 0.4;
 
     useEffect(() => {
-        if (value) {
+        if (multiple) {
+            if (selectAllByDefault && selectedValues.length === 0) {
+                const allValues = options.filter(opt => !opt.disabled).map(opt => opt.value);
+                setMultipleSelectedValues(allValues);
+                onMultipleChange?.(allValues);
+            } else {
+                setMultipleSelectedValues(selectedValues);
+            }
+        } else if (value) {
             const option = options.find(opt => opt.value === value);
             if (option) setSelectedOption(option);
         }
-    }, [value, options]);
+    }, [value, options, selectedValues, multiple, selectAllByDefault]);
 
     const handleSelect = useCallback((option: SelectOption) => {
         if (option.disabled) return;
-        setSelectedOption(option);
-        setIsOpen(false);
-        onChange?.(option.value);
-    }, [onChange]);
+        
+        if (multiple) {
+            const isSelected = multipleSelectedValues.includes(option.value);
+            let newValues: any[];
+            
+            if (isSelected) {
+                // Verificar se pode desselecionar (não ultrapassar limite mínimo)
+                if (multipleSelectedValues.length <= minSelected) {
+                    return; // Não permite desselecionar
+                }
+                newValues = multipleSelectedValues.filter(val => val !== option.value);
+            } else {
+                // Verificar se pode selecionar (não ultrapassar limite máximo)
+                if (maxSelected && multipleSelectedValues.length >= maxSelected) {
+                    return; // Não permite selecionar mais
+                }
+                newValues = [...multipleSelectedValues, option.value];
+            }
+            
+            setMultipleSelectedValues(newValues);
+            onMultipleChange?.(newValues);
+        } else {
+            setSelectedOption(option);
+            setIsOpen(false);
+            onChange?.(option.value);
+        }
+    }, [onChange, onMultipleChange, multiple, multipleSelectedValues, minSelected, maxSelected]);
+
+    const handleSelectAll = useCallback(() => {
+        if (!multiple) return;
+        const allValues = options.filter(opt => !opt.disabled).map(opt => opt.value);
+        setMultipleSelectedValues(allValues);
+        onMultipleChange?.(allValues);
+    }, [options, multiple, onMultipleChange]);
+
+    const handleDeselectAll = useCallback(() => {
+        if (!multiple) return;
+        if (minSelected > 0) return; // Não permite desselecionar todos se há mínimo
+        setMultipleSelectedValues([]);
+        onMultipleChange?.([]);
+    }, [multiple, minSelected, onMultipleChange]);
+
+    const getDisplayText = () => {
+        if (multiple) {
+            if (multipleSelectedValues.length === 0) {
+                return placeholder;
+            }
+            if (multipleSelectedValues.length === options.length) {
+                return "Todos selecionados";
+            }
+            return `${multipleSelectedValues.length} selecionado(s)`;
+        }
+        return selectedOption?.label || placeholder;
+    };
 
     const styles = StyleSheet.create({
         container: {
@@ -137,6 +211,40 @@ export default function UISelect({
         },
         closeButton: {
             padding: 8
+        },
+        selectAllContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingVertical: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.border
+        },
+        selectAllButton: {
+            flex: 1,
+            padding: 8,
+            marginHorizontal: 4,
+            backgroundColor: theme.colors.background,
+            borderRadius: 6,
+            alignItems: 'center'
+        },
+        selectAllText: {
+            fontSize: 14,
+            color: theme.colors.primary,
+            fontWeight: '500'
+        },
+        checkbox: {
+            width: 20,
+            height: 20,
+            borderWidth: 2,
+            borderColor: theme.colors.border,
+            borderRadius: 4,
+            marginRight: 12,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.colors.background
+        },
+        optionTextMultiple: {
+            flex: 1
         }
     });
 
@@ -149,7 +257,7 @@ export default function UISelect({
                 disabled={disabled}
             >
                 <WRText style={styles.selectedText}>
-                    {selectedOption?.label || placeholder}
+                    {getDisplayText()}
                 </WRText>
                 <UIIcon
                     name="chevron-down"
@@ -171,7 +279,9 @@ export default function UISelect({
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <WRText style={styles.modalTitle}>Selecione uma opção</WRText>
+                            <WRText style={styles.modalTitle}>
+                                {multiple ? "Selecione as opções" : "Selecione uma opção"}
+                            </WRText>
                             <TouchableOpacity
                                 style={styles.closeButton}
                                 onPress={() => setIsOpen(false)}
@@ -184,28 +294,59 @@ export default function UISelect({
                             </TouchableOpacity>
                         </View>
 
+                        {multiple && showSelectAll && (
+                            <View style={styles.selectAllContainer}>
+                                <TouchableOpacity
+                                    style={styles.selectAllButton}
+                                    onPress={handleSelectAll}
+                                    disabled={maxSelected != undefined && (multipleSelectedValues.length >= maxSelected)}
+                                >
+                                    <WRText style={styles.selectAllText}>Selecionar Todos</WRText>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.selectAllButton}
+                                    onPress={handleDeselectAll}
+                                    disabled={minSelected > 0}
+                                >
+                                    <WRText style={styles.selectAllText}>Desselecionar Todos</WRText>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
                         <ScrollView style={styles.optionsList}>
                             {options.map((option, index) => (
                                 <TouchableOpacity
                                     key={index}
                                     style={[
                                         styles.option,
-                                        selectedOption?.value === option.value && styles.selectedOption,
+                                        (multiple ? multipleSelectedValues.includes(option.value) : selectedOption?.value === option.value) && styles.selectedOption,
                                         option.disabled && styles.disabledOption
                                     ]}
                                     onPress={() => handleSelect(option)}
                                     disabled={option.disabled}
                                     activeOpacity={0.7}
                                 >
+                                    {multiple && (
+                                        <View style={styles.checkbox}>
+                                            {multipleSelectedValues.includes(option.value) && (
+                                                <UIIcon
+                                                    name="checkmark"
+                                                    size={16}
+                                                    color={theme.colors.primary}
+                                                />
+                                            )}
+                                        </View>
+                                    )}
                                     <WRText
                                         style={[
                                             styles.optionText,
-                                            option.disabled && styles.disabledOptionText
+                                            option.disabled && styles.disabledOptionText,
+                                            multiple && styles.optionTextMultiple
                                         ]}
                                     >
                                         {option.label}
                                     </WRText>
-                                    {selectedOption?.value === option.value && (
+                                    {!multiple && selectedOption?.value === option.value && (
                                         <UIIcon
                                             name="checkmark"
                                             size={20}

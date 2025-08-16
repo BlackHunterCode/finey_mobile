@@ -1,9 +1,10 @@
+import Copyright from "@/components/component_screens/copyright";
 import WRScreenContainer from "@/components/wrappers/WRScreenContainer";
 import WRText from "@/components/wrappers/WRText";
 import { useAppTheme } from "@/context/theme-context";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from "expo-router";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function LoggedOutScreen() {
     const { theme, isDark } = useAppTheme();
@@ -64,27 +65,7 @@ export default function LoggedOutScreen() {
                     </View>
 
                     {/* Footer */}
-                    <View style={styles.footer}>
-                        <View style={styles.footerContent}>
-                            { isDark ? 
-                                (
-                                    <Image 
-                                        source={require("../../../assets/images/blakchunter/bhunter_dark_mode.png")} 
-                                        style={styles.footerImage} 
-                                        resizeMode="contain"/>
-                                ) : 
-                                (
-                                    <Image 
-                                        source={require("../../../assets/images/blakchunter/bhunter_light_mode.png")} 
-                                        style={styles.footerImage} 
-                                        resizeMode="contain"/>
-                                )
-                            }
-                            <WRText style={[styles.footerText, { color: theme.colors.muted }]}>
-                                2025 Black Hunter. Todos os direitos reservados.
-                            </WRText>
-                        </View>
-                    </View>
+                    <Copyright style={{ marginBottom: 24 }}/>
                 </View>
             </WRScreenContainer>
         </>
@@ -138,7 +119,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     primaryButtonText: {
-        color: 'white',
+        color: 'white', 
         fontSize: 16,
         fontWeight: '600',
     },
@@ -153,24 +134,5 @@ const styles = StyleSheet.create({
     secondaryButtonText: {
         fontSize: 16,
         fontWeight: '600',
-    },
-    footer: {
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    footerContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    footerImage: {
-        width: 15, 
-        height: 15,
-        marginRight: 5,
-    },
-    footerText: {
-        fontSize: 12,
-        textAlign: 'center',
-        opacity: 0.7
-    },
+    }
 });

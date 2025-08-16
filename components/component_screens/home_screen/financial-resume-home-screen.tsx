@@ -1,23 +1,29 @@
 import UICard from "@/components/UI/UICard";
 import UIDivider from "@/components/UI/UIDivider";
 import UIIcon from "@/components/UI/UIIcon";
-import UISelect from "@/components/UI/UISelect";
 import WRText from "@/components/wrappers/WRText";
-import { useAppTheme } from "@/context/theme-context";
+import { useAuth } from "@/context/auth-context";
 import { useReferenceDate } from "@/context/reference-date-context";
-import { format, getWeeksInMonth } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { useTargetBanks } from "@/context/target-bank-context";
+import { useAppTheme } from "@/context/theme-context";
+import { useTotalTransactionPeriod } from "@/context/transaction/total-transaction-period-context";
+import { loadTotalTransactionPeriod } from "@/service/service.transaction";
+import AuthResponse from "@/types/AuthResponse";
+import { getWeeksInMonth } from 'date-fns';
 import { useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 type AnalysisPeriod = 'weekly' | 'monthly' | 'yearly';
 
 export default function FinancialResumeHomeScreen() {
     const { theme } = useAppTheme();
-     const [selectedMonth, setSelectedMonth] = useState(1);
+    const [selectedMonth, setSelectedMonth] = useState(1);
     const { referenceDate, getDateRangeByPeriod } = useReferenceDate();
+    const { totalTransactionPeriod, setTotalTransactionPeriod } = useTotalTransactionPeriod();
+    const { selectedBanks } = useTargetBanks();
     const [analysisPeriod, setAnalysisPeriod] = useState<AnalysisPeriod>('monthly');
     const [selectedWeek, setSelectedWeek] = useState<number>(1);
+    const { authObject } = useAuth();
     
     const totalWeeks = getWeeksInMonth(referenceDate);
     const weekOptions = Array.from({ length: totalWeeks }, (_, i) => ({
@@ -31,28 +37,47 @@ export default function FinancialResumeHomeScreen() {
         { label: 'Anual', value: 'yearly' }
     ];
 
-    const handlePeriodChange = (period: AnalysisPeriod) => {
+    const handlePeriodChange = async (period: AnalysisPeriod) => {
         setAnalysisPeriod(period);
         if (period !== 'weekly') {
             setSelectedWeek(1);
         }
+        
+        // Recarregar dados da API baseado no novo período
+        try {
+            const bankAccountIds = selectedBanks?.map(bank => bank.institutionId) || [];
+            const dateRange = getDateRangeByPeriod(period);
+            
+            const result = await loadTotalTransactionPeriod(
+                selectedBanks,
+                referenceDate,
+                authObject as AuthResponse,     
+                true, // considera os cartões de crédito.
+                dateRange?.startDate,
+                dateRange?.endDate
+            );
+            
+            if (result) {
+                setTotalTransactionPeriod(result);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar dados do período:', error);
+        }
     };
-
-    const dateRange = getDateRangeByPeriod(analysisPeriod, selectedWeek);
-
-    // Dados simulados para o resumo financeiro
+    
+    // Dados da API para o resumo financeiro
     const financialData = {
         ganhos: {
-            valor: 750.00,
-            atualizadoEm: "15",
+            valor: totalTransactionPeriod?.totalEarnings || 0,
+            atualizadoEm: "hoje",
             status: "stable",
-            percentual: 62,
+            percentual: 0, // Percentual não disponível na API atual
         },
         gastos: {
-            valor: 1050.00,
+            valor: totalTransactionPeriod?.totalExpenses || 0,
             atualizadoEm: "hoje",
-            percentual: 62,
-            status: "up"
+            percentual: 0, // Percentual não disponível na API atual
+            status: "stable"
         },
         investimentos: {
             valor: "*****", // Valor oculto
@@ -96,24 +121,6 @@ export default function FinancialResumeHomeScreen() {
     const renderMonthlyChart = () => {
         return (
             <View style={styles.chartContainer}>
-                <View style={styles.periodSelector}>
-                    <UISelect
-                        value={analysisPeriod}
-                        options={periodOptions}
-                        onChange={handlePeriodChange}
-                        placeholder="Selecione o período de análise"
-                    />
-                    {analysisPeriod === 'weekly' && (
-                        <View style={styles.weekSelector}>
-                            <UISelect
-                                value={selectedWeek}
-                                options={weekOptions}
-                                onChange={setSelectedWeek}
-                                placeholder="Selecione a semana"
-                            />
-                        </View>
-                    )}
-                </View>
                 <WRText style={styles.chartTitle}>Gráfico de gerenciamento mensal</WRText>
                 
                 <View style={styles.monthsContainer}>
@@ -163,7 +170,7 @@ export default function FinancialResumeHomeScreen() {
 
     const styles = StyleSheet.create({
         periodSelector: {
-            marginBottom: 16
+            width: '50%'
         },
         weekSelector: {
             marginTop: 8,
@@ -178,7 +185,7 @@ export default function FinancialResumeHomeScreen() {
         resumeControlRow: {
             flexDirection: 'row',
             justifyContent: 'space-between',
-            marginBottom: 16
+            alignItems: 'center'
         },
         summaryRow: {
             flexDirection: 'row',
@@ -322,7 +329,45 @@ export default function FinancialResumeHomeScreen() {
         summaryDivider: {
             height: '100%',
             marginHorizontal: 16
-        }
+        },
+        insightCard: {
+            marginTop: 16,
+            borderLeftWidth: 4,
+            borderLeftColor: theme.colors.primary,
+        },
+        insightContainer: {
+            padding: 8,
+        },
+        insightHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        insightTitle: {
+            marginLeft: 8,
+            fontSize: 16,
+            fontFamily: theme.fonts.semiBold.fontFamily,
+            fontWeight: theme.fonts.semiBold.fontWeight,
+        },
+        insightText: {
+            fontSize: 14,
+            lineHeight: 20,
+        },
+        insightHighlight: {
+            fontFamily: theme.fonts.semiBold.fontFamily,
+            fontWeight: theme.fonts.semiBold.fontWeight,
+            color: theme.colors.primary,
+        },
+        insightWarning: {
+            fontFamily: theme.fonts.semiBold.fontFamily,
+            fontWeight: theme.fonts.semiBold.fontWeight,
+            color: theme.colors.error,
+        },
+        insightPositive: {
+            fontFamily: theme.fonts.semiBold.fontFamily,
+            fontWeight: theme.fonts.semiBold.fontWeight,
+            color: '#2E7D32', // Verde para feedback positivo
+        },
     });
 
     return (
@@ -331,15 +376,38 @@ export default function FinancialResumeHomeScreen() {
                 style={styles.mainCard}
                 activeAccordion
                 accordionTitle="Resumo financeiro"
-                accordionBeOpenDefault>
-                
+                accordionBeOpenDefault
+            >    
                 <View style={styles.container}>
-                    <View style={styles.resumeControlRow}>
-                    <TouchableOpacity style={{ flexDirection: 'row', gap: 4 }}>
-                        <UIIcon name="clipboard" size={16}/>
-                        <WRText>Resumão</WRText>
-                    </TouchableOpacity>
-                </View>
+                    <View style={[styles.resumeControlRow, { marginBottom: 8 }]}>
+                        <TouchableOpacity style={{ flexDirection: 'row', gap: 4 }}>
+                            <UIIcon name="clipboard" size={16}/>
+                            <WRText>Resumão</WRText>
+                        </TouchableOpacity>
+                        {/* UISelect de tipos de análise comentado - não será usado agora
+                        <View style={styles.periodSelector}>
+                            <UISelect
+                                value={analysisPeriod}
+                                options={periodOptions}
+                                onChange={handlePeriodChange}
+                                placeholder="Selecione o período de análise"
+                                style={{ width: '100%' }}
+                            />
+                        </View>
+                        */}
+                    </View>
+                    {/* Seletor de semana também comentado pois depende do UISelect acima
+                    {analysisPeriod === 'weekly' && (
+                        <View style={styles.weekSelector}>
+                            <UISelect
+                                value={selectedWeek}
+                                options={weekOptions}
+                                onChange={setSelectedWeek}
+                                placeholder="Selecione a semana"
+                            />
+                        </View>
+                    )}
+                    */}
                     {/* Cards de resumo financeiro */}
                     <View style={styles.summaryRow}>
                         <UICard style={styles.summaryCard} href="/ganhos" openStack>
@@ -375,6 +443,7 @@ export default function FinancialResumeHomeScreen() {
                     </View>
                     
                     {/* Card de investimentos */}
+                    {/*
                     <UICard href="/investimentos" openStack style={{ marginBottom: 16 }}>
                         <WRText style={styles.summaryCardTitle}>Investimentos</WRText>
                         <View style={styles.summaryCardContent}>
@@ -386,9 +455,6 @@ export default function FinancialResumeHomeScreen() {
                                     <UIIcon name="eye-off" size={20} color={theme.colors.muted} />
                                 </View>
                             </View>
-                            {/* <WRText style={styles.summaryCardUpdated}>
-                                atualizado dia {financialData.investimentos.atualizadoEm}
-                            </WRText> */}
                         </View>
                         <View style={styles.investmentCategories}>
                             {financialData.investimentos.categorias.map((categoria, index) => (
@@ -403,16 +469,36 @@ export default function FinancialResumeHomeScreen() {
                             </View>
                         </View>
                     </UICard>
+                    */}
                     
-                    {/* Ícone de filtro */}
-                    <View style={styles.filterIconContainer}>
-                        <UIIcon name="funnel" size={24} color={theme.colors.primary} />
+                    {/* Insight Financeiro */}
+                    <View style={styles.insightContainer}>
+                        <View style={styles.insightHeader}>
+                            <UIIcon name="bulb-outline" size={20} color={theme.colors.primary} withBackground={true} backgroundSize={36} />
+                            <WRText style={styles.insightTitle}>Insight do Mês</WRText>
+                        </View>
+                        <WRText style={styles.insightText}>
+                            Você gastou <WRText style={styles.insightHighlight}>R$ {financialData.gastos.valor.toFixed(2)}</WRText> e 
+                            ganhou <WRText style={styles.insightHighlight}>R$ {financialData.ganhos.valor.toFixed(2)}</WRText> nesse mês.
+                            {financialData.gastos.valor > financialData.ganhos.valor ? (
+                                <WRText style={styles.insightWarning}> Você está gastando mais do que está ganhando!</WRText>
+                            ) : (
+                                <WRText style={styles.insightPositive}> Parabéns! Você está economizando!</WRText>
+                            )}
+                        </WRText>
                     </View>
+
+                    {/* Ícone de filtro */}
+                    {/* <View style={styles.filterIconContainer}>
+                        <UIIcon name="funnel" size={24} color={theme.colors.primary} />
+                    </View> */}
                     
                     {/* Gráfico mensal */}
-                    {renderMonthlyChart()}
+                    {/*renderMonthlyChart()*/}
                 </View>
             </UICard>
+
+            {/* Remover o card de insight separado, já que agora está dentro do card principal */}
         </>
     );
 }

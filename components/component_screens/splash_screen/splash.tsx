@@ -1,21 +1,76 @@
 import WRText from "@/components/wrappers/WRText";
+import { useNavigation } from '@/context/navigation-context';
+import { useSplashErrorMessage } from '@/context/splash-error-message-context';
 import { useAppTheme } from "@/context/theme-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Href } from "expo-router";
+import { Href, useRouter } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 interface SplashScreenProps {
     onRouterSuccess?: Href;
     onRouterError?: Href;
     message?: string;
-    onProcess?: () => void;
+    onProcess?: () => Promise<void> | void;
+    processingTime?: number;
 }
 
-export default function SplashScreen({ message }: SplashScreenProps) {
+function extractErrorMessage(error: any): string {
+    if (!error) return 'Erro desconhecido ao processar operação.';
+    if (typeof error === 'string') return error;
+    if (error.response && error.response.data && typeof error.response.data.message === 'string') {
+        return error.response.data.message;
+    }
+    if(error._response) return JSON.stringify(error._response);
+    //if (typeof error.message === 'string') return error.message;
+    return JSON.stringify(error);
+}
+
+export default function SplashScreen({ message, onProcess, onRouterSuccess, onRouterError, processingTime = 2000 }: SplashScreenProps) {
     const { theme } = useAppTheme();
+    const router = useRouter();
+    const { hideSplashScreen } = useNavigation();
+    const { setErrorMessage } = useSplashErrorMessage();
+
+    useEffect(() => {
+        let isMounted = true;
+        async function runOnProcess() {
+            console.log("SplashScreen: Iniciando runOnProcess");
+            try {
+                if (onProcess) {
+                    console.log("SplashScreen: Executando onProcess");
+                    await onProcess();
+                    console.log("SplashScreen: onProcess finalizado");
+                }
+                setTimeout(() => {
+                    if (isMounted && onRouterSuccess) {
+                        console.log("SplashScreen: Redirecionando para", onRouterSuccess);
+                        setErrorMessage(null);
+                        hideSplashScreen();
+                        router.replace(onRouterSuccess);
+                    }
+                }, processingTime);
+            } catch (error: any) {
+                console.log("SplashScreen: Erro no onProcess", error);
+                console.log(extractErrorMessage(error))
+                setErrorMessage(extractErrorMessage(error));
+                setTimeout(() => {
+                    if (isMounted && onRouterError) {
+                        console.log("SplashScreen: Redirecionando para rota de erro", onRouterError);
+                        setTimeout(() => {
+                            hideSplashScreen();
+                            router.replace(onRouterError);
+                        }, 100); // Delay para garantir atualização do contexto
+                    }
+                }, processingTime);
+            }
+        }
+        runOnProcess();
+        return () => { isMounted = false; };
+    }, [onProcess, onRouterSuccess, onRouterError, processingTime]);
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.container, styles.overlay, { backgroundColor: theme.colors.background }]}>
             <LinearGradient
                 colors={theme.colors.primaryGradient as [string, string]}
                 style={styles.logoContainer}
@@ -51,6 +106,14 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         padding: 20,
+    },
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
     },
     logoContainer: {
         width: 100,

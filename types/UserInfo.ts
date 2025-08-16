@@ -1,4 +1,5 @@
 import { AccountStatus } from "./AccountStatus";
+import { FinancialInstitutionData } from "./FinancialInstitutionData";
 
 export default interface UserInfo {
     accountId: string;
@@ -7,5 +8,5 @@ export default interface UserInfo {
     lastName: string | null;
     endDateTimeOfTutorialPeriod: Date;
     accountStatus: AccountStatus;
-    connectedBanks: string[];
+    connectedBanks: FinancialInstitutionData[];
 }

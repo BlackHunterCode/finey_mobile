@@ -4,8 +4,13 @@ import WRText from "@/components/wrappers/WRText";
 import { ToastType } from "@/constants/constants.toast";
 import { useAuth } from "@/context/auth-context";
 import { useNavigation } from "@/context/navigation-context";
+import { useReferenceDate } from "@/context/reference-date-context";
 import { useToast } from "@/context/toast-context";
+import { useTotalTransactionPeriod } from "@/context/transaction/total-transaction-period-context";
 import { connectToBank } from "@/service/service.financial-integrator";
+import { loadTotalTransactionPeriod } from "@/service/service.transaction";
+import { getUserInfo } from "@/service/service.user";
+import UserInfo from "@/types/UserInfo";
 import { Stack } from "expo-router";
 import { JSX, useState } from "react";
 import { Image } from "react-native";
@@ -18,6 +23,8 @@ export default function ConnectBankScreen() {
     const { authObject } = useAuth();
     const { showToast } = useToast();
     const { pushToSplashScreen } = useNavigation();
+    const { referenceDate } = useReferenceDate();
+    const { setTotalTransactionPeriod } = useTotalTransactionPeriod();
 
     async function handleConnectBank() {
         try {
@@ -26,7 +33,36 @@ export default function ConnectBankScreen() {
         
         const webViewComponent = await connectToBank({
             authObject: authObject,
-            onSuccess: () => {
+            onSuccess: async () => {
+                let userInfo: UserInfo | null = null;
+                try {
+                  userInfo = await getUserInfo(authObject);
+                } catch(err: any) {
+                  showToast({
+                    message: "Ocorreu um erro ao puxar os dados do usuário. O suporte foi acionado.",
+                    type: ToastType.ERROR,
+                    suport: {
+                      errorObject: err
+                    }
+                  })
+                }
+          
+                if(!userInfo) {
+                  showToast({
+                    message: "Ocorreu um erro ao puxar os dados do usuário. Contate o suporte.",
+                    type: ToastType.ERROR
+                  })
+                  return;
+                }
+
+                if(!authObject) {
+                    showToast({
+                        message: "Ocorreu um erro ao puxar os dados de autenticação. Contate o suporte.",
+                        type: ToastType.ERROR
+                    })
+                    return;
+                }
+
                 setBankWebView(null);
                 setIsLoading(false);
                 showToast({
@@ -36,6 +72,17 @@ export default function ConnectBankScreen() {
                 pushToSplashScreen({
                     onRouterSuccess: "/authenticated/(tabs)/home",
                     message: "Redirecionando para a tela inicial...",
+                    onProcess: async () => {
+                        const result = await loadTotalTransactionPeriod(
+                            userInfo.connectedBanks,
+                            referenceDate,
+                            authObject,
+                            true // considera os cartões de crédito.
+                        );
+                        if (result) {
+                            setTotalTransactionPeriod(result);
+                        }
+                    },
                     processingTime: 5500
                 })
             },

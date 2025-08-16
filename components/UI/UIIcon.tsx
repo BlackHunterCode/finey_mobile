@@ -1,5 +1,6 @@
 import { useAppTheme } from '@/context/theme-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { JSX } from 'react';
 import { Image, ImageSourcePropType, StyleProp, StyleSheet, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
 
@@ -17,6 +18,8 @@ interface UIIconProps {
   disabled?: boolean;
   staticSource?: ImageSourcePropType | undefined;
   useSvg?: boolean;
+  useGradient?: boolean;
+  gradientColors?: string[];
 }
 
 export default function UIIcon({
@@ -30,7 +33,9 @@ export default function UIIcon({
   style,
   iconStyle,
   disabled = false,
-  staticSource = undefined
+  staticSource = undefined,
+  useGradient = false,
+  gradientColors = []
 }: UIIconProps) {
   const { theme } = useAppTheme();
   const iconColor = color || theme.colors.primary;
@@ -59,23 +64,33 @@ export default function UIIcon({
 
   if (withBackground) {
     return (
-      <TouchableOpacity
-        onPress={onPress}
-        disabled={disabled || !onPress}
-        style={[
-          {
+      useGradient && gradientColors ? (
+        <LinearGradient
+          colors={gradientColors as [string, string]}
+          style={{
+            width: backgroundSize,
+            height: backgroundSize,
+            borderRadius: 8,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {icon}
+        </LinearGradient>
+      ) : (
+        <View
+          style={{
             width: backgroundSize,
             height: backgroundSize,
             borderRadius: 8,
             backgroundColor: iconBackgroundColor,
             justifyContent: 'center',
             alignItems: 'center',
-          },
-          style,
-        ]}
-      >
-        {icon}
-      </TouchableOpacity>
+          }}
+        >
+          {icon}
+        </View>
+      )
     );
   }
 

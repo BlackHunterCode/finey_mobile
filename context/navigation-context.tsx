@@ -5,18 +5,19 @@
  */
 
 import SplashScreen from '@/components/component_screens/splash_screen/splash';
-import { Href, router } from 'expo-router';
-import React, { createContext, useContext, useState } from 'react';
 import { splashPhrases } from '@/constants/constants.app-phrases';
+import { Href } from 'expo-router';
+import React, { createContext, useContext, useState } from 'react';
 
 interface NavigationContextData {
   pushToSplashScreen: (params: {
     onRouterSuccess?: Href;
     onRouterError?: Href;
     message?: string;
-    onProcess?: () => void;
+    onProcess?: () => Promise<void> | void;
     processingTime?: number;
   }) => void;
+  hideSplashScreen: () => void;
 }
 
 const NavigationContext = createContext<NavigationContextData | undefined>(undefined);
@@ -27,7 +28,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     onRouterSuccess?: Href;
     onRouterError?: Href;
     message?: string;
-    onProcess?: () => void;
+    onProcess?: () => Promise<void> | void;
     processingTime?: number;
   }>({});
 
@@ -35,60 +36,30 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     onRouterSuccess?: Href;
     onRouterError?: Href;
     message?: string;
-    onProcess?: () => void;
+    onProcess?: () => Promise<void> | void;
     processingTime?: number;
   }) => {
-    setSplashParams(params);
+    setSplashParams({
+      ...params,
+      onRouterError: params.onRouterError || '/unauthenticated/_error',
+    });
     setShowSplash(true);
-    
-    // Executa o processamento se fornecido
-    if (params.onProcess) {
-      try {
-        params.onProcess();
-        // Após o processamento, navega para a rota de sucesso se fornecida
-        if (params.onRouterSuccess) {
-          setTimeout(() => {
-            setShowSplash(false);
-            if (params.onRouterSuccess) {
-              router.replace(params.onRouterSuccess);
-            }
-          }, params.processingTime || 2000);
-        }
-      } catch (error) {
-        // Em caso de erro, navega para a rota de erro se fornecida
-        if (params.onRouterError) {
-          setTimeout(() => {
-            setShowSplash(false);
-            if (params.onRouterError) {
-              router.replace(params.onRouterError);
-            }
-          }, params.processingTime || 2000);
-        }
-      }
-    } else {
-      // Se não houver processamento, apenas navega após o tempo definido
-      if (params.onRouterSuccess) {
-        setTimeout(() => {
-          setShowSplash(false);
-          if (params.onRouterSuccess) {
-            router.replace(params.onRouterSuccess);
-          }
-        }, params.processingTime || 2000);
-      }
-    }
+  };
+
+  const hideSplashScreen = () => {
+    setShowSplash(false);
   };
 
   return (
-    <NavigationContext.Provider value={{ pushToSplashScreen }}>
-      {showSplash ? (
+    <NavigationContext.Provider value={{ pushToSplashScreen, hideSplashScreen }}>
+      {children}
+      {showSplash && (
         <SplashScreen 
           onRouterSuccess={splashParams.onRouterSuccess}
           onRouterError={splashParams.onRouterError}
           message={splashParams.message || splashPhrases[Math.floor(Math.random() * splashPhrases.length)]}
           onProcess={splashParams.onProcess}
         />
-      ) : (
-        children
       )}
     </NavigationContext.Provider>
   );

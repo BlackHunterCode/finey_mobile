@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-export type PeriodType = 'weekly' | 'monthly' | 'yearly';
+export type PeriodType = 'weekly' | 'monthly' | 'yearly' | 'custom';
 
 interface DateRange {
     startDate: Date;
@@ -10,6 +10,8 @@ interface DateRange {
 interface ReferenceDateContextType {
     referenceDate: Date;
     setReferenceDate: (date: Date) => void;
+    customDateRange: DateRange | null;
+    setCustomDateRange: (range: DateRange | null) => void;
     getDateRangeByPeriod: (type: PeriodType, weekNumber?: number) => DateRange;
 }
 
@@ -20,6 +22,8 @@ export function ReferenceDateProvider({ children }: { children: React.ReactNode 
         const today = new Date();
         return new Date(today.getFullYear(), today.getMonth(), 1);
     });
+    
+    const [customDateRange, setCustomDateRange] = useState<DateRange | null>(null);
 
     const getDateRangeByPeriod = (type: PeriodType, weekNumber?: number): DateRange => {
         const today = new Date();
@@ -28,6 +32,18 @@ export function ReferenceDateProvider({ children }: { children: React.ReactNode 
         const isCurrentYear = referenceDate.getFullYear() === today.getFullYear();
 
         switch (type) {
+            case 'custom': {
+                if (customDateRange) {
+                    return customDateRange;
+                }
+                // Fallback para mensal se não houver período personalizado
+                const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
+                const end = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0);
+                return {
+                    startDate: start,
+                    endDate: isCurrentMonth ? today : end
+                };
+            }
             case 'weekly': {
                 const weeksInMonth = [];
                 const monthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
@@ -101,6 +117,8 @@ export function ReferenceDateProvider({ children }: { children: React.ReactNode 
             value={{
                 referenceDate,
                 setReferenceDate,
+                customDateRange,
+                setCustomDateRange,
                 getDateRangeByPeriod
             }}
         >
