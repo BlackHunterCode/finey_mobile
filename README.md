@@ -1,12 +1,12 @@
 
-# 💸 Hunter Wallet - Mobile App
+# 💸 Finey - Mobile App
 
-![Hunter Wallet Logo](https://via.placeholder.com/150x50?text=Panther+Wallet)  
+![Finey Logo](https://via.placeholder.com/150x50?text=Finey)  
 *Aplicativo de gestão financeira pessoal com foco em educação e comunidade*
 
 ## 🚀 Visão Geral
 
-O Hunter Wallet é um aplicativo mobile que ajuda usuários a organizarem suas finanças pessoais, oferecendo:
+O Finey é um aplicativo mobile que ajuda usuários a organizarem suas finanças pessoais, oferecendo:
 
 - 📊 Controle completo de gastos e ganhos *[**MVP-0.1.0**]*
 - 💰 Gestão inteligente de investimentos *[**MVP-0.1.0**]*
@@ -112,7 +112,7 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo LICENSE para d
 
 ## 📬 Contato
 
-Equipe Hunter Wallet - hunterwallet.contanto@gmail.com  
+Equipe Finey - finey.contato@gmail.com  
 Discord
 
 ### 📌 Destaques Especiais

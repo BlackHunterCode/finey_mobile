@@ -1,8 +1,16 @@
 import { useAppTheme } from '@/context/theme-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, LinkProps } from 'expo-router';
-import React from 'react';
-import { StyleProp, Text, TextStyle, TouchableOpacity, ViewStyle } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    Animated,
+    StyleProp,
+    Text,
+    TextStyle,
+    TouchableOpacity,
+    ViewStyle
+} from 'react-native';
 
 interface ButtonProps {
     text: string;
@@ -16,14 +24,10 @@ interface ButtonProps {
     textStyle?: StyleProp<TextStyle>;
     disabled?: boolean;
     size?: 'small' | 'medium' | 'large';
+    isLoading?: boolean;
+    error?: boolean;
 }
 
-/**
- * UIButton - Um componente de botão redondo responsivo
- * 
- * @param props ButtonProps
- * @returns React.JSX.Element
- */
 export default function UIButton({
     text,
     onPress,
@@ -35,11 +39,78 @@ export default function UIButton({
     style,
     textStyle,
     disabled = false,
-    size = 'medium'
+    size = 'medium',
+    isLoading = false,
+    error = false
 }: ButtonProps) {
     const { theme } = useAppTheme();
+    const [displayError, setDisplayError] = useState(false);
+    const [buttonText, setButtonText] = useState(text);
     
-    // Determine sizes based on the size prop
+    // Animação de shake (nativa) - agora aplicada ao botão inteiro
+    const shakeAnimation = useRef(new Animated.Value(0)).current;
+    
+    // Estado para a cor de fundo
+    const [backgroundColor, setBackgroundColor] = useState(
+        hasBackground ? theme.colors.primary : 'transparent'
+    );
+
+    useEffect(() => {
+        if (error) {
+            setDisplayError(true);
+            setButtonText("Erro na operação!");
+            
+            // Resetar animação
+            shakeAnimation.setValue(0);
+
+            // Animação de shake mais intensa (botão inteiro)
+            Animated.sequence([
+                Animated.timing(shakeAnimation, {
+                    toValue: 15,  // Aumentei a intensidade do shake
+                    duration: 80,
+                    useNativeDriver: true
+                }),
+                Animated.timing(shakeAnimation, {
+                    toValue: -15,
+                    duration: 80,
+                    useNativeDriver: true
+                }),
+                Animated.timing(shakeAnimation, {
+                    toValue: 15,
+                    duration: 80,
+                    useNativeDriver: true
+                }),
+                Animated.timing(shakeAnimation, {
+                    toValue: -15,
+                    duration: 80,
+                    useNativeDriver: true
+                }),
+                Animated.timing(shakeAnimation, {
+                    toValue: 15,
+                    duration: 80,
+                    useNativeDriver: true
+                }),
+                Animated.timing(shakeAnimation, {
+                    toValue: 0,
+                    duration: 80,
+                    useNativeDriver: true
+                })
+            ]).start();
+
+            // Mudança para cor vermelha
+            setBackgroundColor(theme.colors.error || '#FF0000');
+            
+            // Voltar ao normal após 4 segundos (aumentei o tempo)
+            const timer = setTimeout(() => {
+                setBackgroundColor(hasBackground ? theme.colors.primary : 'transparent');
+                setDisplayError(false);
+                setButtonText(text);
+            }, 4000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
+
     const getSizeStyles = () => {
         switch (size) {
             case 'small':
@@ -67,20 +138,18 @@ export default function UIButton({
     };
     
     const sizeStyles = getSizeStyles();
-    
-    // Button styles based on props
-    const buttonStyles: ViewStyle = {
-        backgroundColor: hasBackground ? theme.colors.primary : 'transparent',
-        borderRadius: 50, // Makes it round
+
+    const buttonContainerStyles: ViewStyle = {
+        borderRadius: 50,
         flexDirection: iconPosition === 'left' ? 'row' : 'row-reverse',
         justifyContent: 'center',
         alignItems: 'center',
         paddingVertical: sizeStyles.paddingVertical,
         paddingHorizontal: sizeStyles.paddingHorizontal,
         opacity: disabled ? 0.6 : 1,
+        backgroundColor: backgroundColor,
     };
     
-    // Text styles based on props
     const buttonTextStyles: TextStyle = {
         color: textColor || (hasBackground ? '#FFFFFF' : theme.colors.primary),
         fontSize: sizeStyles.fontSize,
@@ -89,44 +158,55 @@ export default function UIButton({
         marginRight: icon && iconPosition === 'right' ? 8 : 0,
     };
     
-    // Button content component to avoid duplication
     const ButtonContent = () => (
         <>
-            {icon && (
-                <Ionicons 
-                    name={icon as any} 
-                    size={sizeStyles.iconSize} 
-                    color={textColor || (hasBackground ? '#FFFFFF' : theme.colors.primary)} 
-                />
+            {isLoading ? (
+                <ActivityIndicator color={textColor || (hasBackground ? '#FFFFFF' : theme.colors.primary)} />
+            ) : (
+                <>
+                    {icon && (
+                        <Ionicons 
+                            name={icon as any} 
+                            size={sizeStyles.iconSize} 
+                            color={textColor || (hasBackground ? '#FFFFFF' : theme.colors.primary)} 
+                        />
+                    )}
+                    <Text style={[buttonTextStyles, textStyle]}>{buttonText}</Text>
+                </>
             )}
-            <Text style={[buttonTextStyles, textStyle]}>{text}</Text>
         </>
     );
-    
-    // If href is provided, use Link component for navigation
+
+    const animatedStyle = {
+        transform: [{ translateX: shakeAnimation }],
+    };
+
     if (href) {
         return (
             <Link href={href} asChild>
-                <TouchableOpacity 
-                    style={[buttonStyles, style]} 
-                    activeOpacity={0.7}
-                    disabled={disabled}
-                >
-                    <ButtonContent />
-                </TouchableOpacity>
+                <Animated.View style={[animatedStyle, { borderRadius: 50 }]}>
+                    <TouchableOpacity 
+                        style={[buttonContainerStyles, style]}
+                        activeOpacity={0.7}
+                        disabled={disabled || isLoading || displayError}
+                    >
+                        <ButtonContent />
+                    </TouchableOpacity>
+                </Animated.View>
             </Link>
         );
     }
     
-    // Otherwise use regular TouchableOpacity with onPress
     return (
-        <TouchableOpacity 
-            style={[buttonStyles, style]} 
-            onPress={onPress}
-            activeOpacity={0.7}
-            disabled={disabled}
-        >
-            <ButtonContent />
-        </TouchableOpacity>
+        <Animated.View style={[animatedStyle, { borderRadius: 50 }]}>
+            <TouchableOpacity 
+                style={[buttonContainerStyles, style]}
+                onPress={onPress}
+                activeOpacity={0.7}
+                disabled={disabled || isLoading || displayError}
+            >
+                <ButtonContent />
+            </TouchableOpacity>
+        </Animated.View>
     );
 }

@@ -14,6 +14,7 @@ const WRText = forwardRef<React.ComponentRef<typeof RNText>, TextProps>((props, 
           fontWeight: theme.fonts.regular.fontWeight,
           includeFontPadding: false,
           textAlignVertical: 'center',
+          color: theme.colors.text,
         }, 
         props.style
       ]}
