@@ -169,7 +169,7 @@ export default function ExpenseCategoriesScreen({ analysis } : ExpenseCategories
                             <View style={[styles.progressBar, { width: `${category.percentage}%` }]} />
                         </View>
                         
-                        {category.comparison && (
+                        {category.comparison ? (
                             <View style={styles.comparisonContainer}>
                                 <UIIcon 
                                     name={category.comparison.increased ? "arrow-up" : "arrow-down"} 
@@ -183,7 +183,7 @@ export default function ExpenseCategoriesScreen({ analysis } : ExpenseCategories
                                     {category.comparison.percentage}% {category.comparison.increased ? 'a mais' : 'a menos'} que no mês anterior
                                 </WRText>
                             </View>
-                        )}
+                        ) : (<></>)}
                     </View>
                 );})}
             </View>

@@ -287,14 +287,14 @@ export default function SavingsInvestmentsScreen({ analysis } : SavingsInvestmen
                                         <WRText style={styles.hiddenValue}>****</WRText>
                                     )}
                                 </View>
-                                {showValues && (
+                                {showValues ? (
                                     <WRText style={[
                                         styles.investmentReturn,
                                         investment.return.isPositive ? styles.positiveReturn : styles.negativeReturn
                                     ]}>
                                         {investment.return.isPositive ? '+' : ''}R$ {investment.return.value.toFixed(2)} ({investment.return.percentage.toFixed(2)}%)
                                     </WRText>
-                                )}
+                                ) : (<></>)}
                             </View>
                         </View>
                     ))}
