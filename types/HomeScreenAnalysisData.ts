@@ -109,7 +109,7 @@ export interface IncomeBreakdown {
     incomeSources: IncomeSource[];
     totalIncome: string;
     recurringIncome: string;
-    variableIncom: string;
+    variableIncome: string;
 }
 
 export interface IncomeSource {
