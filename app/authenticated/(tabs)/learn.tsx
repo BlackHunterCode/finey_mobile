@@ -236,7 +236,6 @@ export default function LearnScreen() {
           <WRText style={styles.subtitle}>Descubra como o Finey pode transformar sua vida financeira</WRText>
         </View>
 
-        {/* Seção sobre o App */}
         <WRText style={styles.sectionTitle}>O que é o Finey?</WRText>
         <UICard>
           <View style={styles.cardContent}>
@@ -266,7 +265,6 @@ export default function LearnScreen() {
           </View>
         </LinearGradient>
 
-        {/* Seção de Onboarding */}
         <WRText style={styles.sectionTitle}>Conheça o Finey</WRText>
         <UICard style={styles.onboardingCard}>
           <View style={styles.onboardingContent}>
@@ -284,7 +282,6 @@ export default function LearnScreen() {
           </View>
         </UICard>
 
-        {/* Seção de Curiosidades */}
         <WRText style={styles.sectionTitle}>Curiosidades Financeiras</WRText>
         
         <View style={styles.curiosityItem}>
@@ -317,7 +314,6 @@ export default function LearnScreen() {
           <WRText style={styles.curiosityText}>A regra 50-30-20 sugere usar 50% da renda para necessidades, 30% para desejos e 20% para poupar.</WRText>
         </View>
 
-        {/* Seção de Feedbacks */}
         <WRText style={styles.sectionTitle}>O que nossos usuários dizem</WRText>
         <UICard style={styles.feedbackCard}>
           <View style={styles.feedbackHeader}>

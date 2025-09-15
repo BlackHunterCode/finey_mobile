@@ -23,7 +23,6 @@ export default function LoggedOutScreen() {
             <Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: theme.colors.background } }} />
             <WRScreenContainer style={[styles.container, { backgroundColor: theme.colors.background }]}>
                 <View style={styles.content}>
-                    {/* Logo/Branding */}
                     <View style={styles.logoContainer}>
                         <View style={[styles.logo, { backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
                             <WRText style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>FN</WRText>
@@ -36,7 +35,6 @@ export default function LoggedOutScreen() {
                         </WRText>
                     </View>
 
-                    {/* Buttons */}
                     <View style={styles.buttonsContainer}>
                         <TouchableOpacity 
                             onPress={handleLogin}
@@ -64,7 +62,6 @@ export default function LoggedOutScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Footer */}
                     <Copyright style={{ marginBottom: 24 }}/>
                 </View>
             </WRScreenContainer>

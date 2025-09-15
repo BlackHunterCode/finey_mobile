@@ -2,9 +2,17 @@ import UICard from "@/components/UI/UICard";
 import UIIcon from "@/components/UI/UIIcon";
 import WRText from "@/components/wrappers/WRText";
 import { useAppTheme } from "@/context/theme-context";
+import { SavingsInvestments } from "@/types/HomeScreenAnalysisData";
+import { CryptUtil } from "@/utils/CryptoUtil";
 import { Ionicons } from "@expo/vector-icons";
+import Constants from 'expo-constants';
 import { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
+
+function logStyleValue(name: any, value: any) {
+  console.log(`[SavingsInvestments] ${name}:`, JSON.stringify(value));
+  return value;
+}
 
 interface Investment {
     type: string;
@@ -17,51 +25,93 @@ interface Investment {
     icon: React.ComponentProps<typeof Ionicons>['name'];
 }
 
-export default function SavingsInvestmentsScreen() {
+interface SavingsInvestmentsScreenProps {
+    analysis: SavingsInvestments | undefined;
+}
+
+export default function SavingsInvestmentsScreen({ analysis } : SavingsInvestmentsScreenProps) {
+    console.log("[SavingsInvestments] Renderizando componente", analysis ? "com dados" : "sem dados");
+    const secretKey: string | undefined = Constants.expoConfig?.extra?.PLUGGY_CRYPT_SECRET;
+    if (!secretKey) {
+        throw new Error('Chave de criptografia não configurada. Verifique as variáveis de ambiente.');
+    }
+
     const { theme } = useAppTheme();
     
     // Estado para controlar a visibilidade dos valores
     const [showValues, setShowValues] = useState(false);
     
-    // Dados mockados para os investimentos
-    // Em uma implementação real, esses dados viriam da API
-    const [investments, setInvestments] = useState<Investment[]>([
-        {
-            type: "Renda Fixa",
-            amount: 15000,
-            return: {
-                value: 120,
-                percentage: 0.8,
-                isPositive: true
-            },
-            icon: "lock-closed"
-        },
-        {
-            type: "Ações",
-            amount: 8000,
-            return: {
-                value: -200,
-                percentage: 2.5,
-                isPositive: false
-            },
-            icon: "stats-chart"
-        },
-        {
-            type: "Fundos",
-            amount: 5000,
-            return: {
-                value: 75,
-                percentage: 1.5,
-                isPositive: true
-            },
-            icon: "people"
+    // Função para obter dados de investimentos
+    const getSavingsData = () => {
+        if (analysis) {
+            // Usar dados reais da análise
+            const investments: Investment[] = analysis.investments.map(inv => ({
+                type: CryptUtil.decrypt(inv.type, secretKey),
+                amount: parseFloat(CryptUtil.decrypt(inv.amount, secretKey)) || 0,
+                return: {
+                    value: parseFloat(CryptUtil.decrypt(inv.investmentReturn.value, secretKey)) || 0,
+                    percentage: parseFloat(CryptUtil.decrypt(inv.investmentReturn.percentage, secretKey)) || 0,
+                    isPositive: inv.investmentReturn.isPositive
+                },
+                icon: CryptUtil.decrypt(inv.icon, secretKey) as React.ComponentProps<typeof Ionicons>['name'] || "wallet"
+            }));
+            
+            return {
+                investments,
+                totalInvested: parseFloat(CryptUtil.decrypt(analysis.totalInvested, secretKey)) || 0,
+                totalReturn: parseFloat(CryptUtil.decrypt(analysis.totalReturn, secretKey)) || 0,
+                totalReturnPercentage: parseFloat(CryptUtil.decrypt(analysis.totalReturnPercentage, secretKey)) || 0
+            };
         }
-    ]);
+        
+        // Dados de fallback (mockados)
+        const fallbackInvestments: Investment[] = [
+            {
+                type: "Renda Fixa",
+                amount: 15000,
+                return: {
+                    value: 120,
+                    percentage: 0.8,
+                    isPositive: true
+                },
+                icon: "lock-closed"
+            },
+            {
+                type: "Ações",
+                amount: 8000,
+                return: {
+                    value: -200,
+                    percentage: 2.5,
+                    isPositive: false
+                },
+                icon: "stats-chart"
+            },
+            {
+                type: "Fundos",
+                amount: 5000,
+                return: {
+                    value: 75,
+                    percentage: 1.5,
+                    isPositive: true
+                },
+                icon: "people"
+            }
+        ];
+        
+        const totalInvested = fallbackInvestments.reduce((sum, inv) => sum + inv.amount, 0);
+        const totalReturn = fallbackInvestments.reduce((sum, inv) => sum + inv.return.value, 0);
+        const totalReturnPercentage = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
+        
+        return {
+            investments: fallbackInvestments,
+            totalInvested,
+            totalReturn,
+            totalReturnPercentage
+        };
+    };
     
-    // Calcular totais
-    const totalInvested = investments.reduce((sum, inv) => sum + inv.amount, 0);
-    const totalReturn = investments.reduce((sum, inv) => sum + inv.return.value, 0);
-    const totalReturnPercentage = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
+    const savingsData = getSavingsData();
+    const { investments, totalInvested, totalReturn, totalReturnPercentage } = savingsData;
     const isPositiveReturn = totalReturn >= 0;
     
     const styles = StyleSheet.create({
@@ -163,16 +213,21 @@ export default function SavingsInvestmentsScreen() {
         investmentReturn: {
             fontSize: 12,
             marginTop: 4
+        },
+        loadingContainer: {
+            alignItems: "center",
+            justifyContent: 'center'
+        },
+        detailTitle: {
+            fontSize: 16, 
+            fontWeight: '500', 
+            marginBottom: 12
         }
     });
 
-    return (
-        <UICard
-            style={styles.mainCard}
-            activeAccordion
-            accordionTitle="Poupança e investimentos"
-            accordionBeOpenDefault
-        >
+    function CardContent() {
+        console.log("[SavingsInvestments] Renderizando CardContent");
+        return (
             <View style={styles.container}>
                 <View style={styles.headerRow}>
                     <View style={styles.totalContainer}>
@@ -201,11 +256,11 @@ export default function SavingsInvestmentsScreen() {
                     <View style={styles.returnRow}>
                         <WRText style={styles.returnLabel}>Rendimento no mês</WRText>
                         {showValues ? (
-                            <WRText style={[
+                            <WRText style={logStyleValue("returnValueStyle", [
                                 styles.returnValue,
-                                isPositiveReturn ? styles.positiveReturn : styles.negativeReturn
-                            ]}>
-                                {isPositiveReturn ? '+' : ''}{totalReturn.toFixed(2)} ({totalReturnPercentage.toFixed(2)}%)
+                                isPositiveReturn ? styles.positiveReturn : {}
+                            ])}>
+                                {isPositiveReturn ? '+' : ''}R$ {totalReturn.toFixed(2)} ({totalReturnPercentage.toFixed(2)}%)
                             </WRText>
                         ) : (
                             <WRText style={styles.hiddenValue}>****</WRText>
@@ -213,7 +268,7 @@ export default function SavingsInvestmentsScreen() {
                     </View>
                 </View>
                 
-                <WRText style={{ fontSize: 16, fontWeight: '500', marginBottom: 12 }}>
+                <WRText style={styles.detailTitle}>
                     Detalhamento por tipo
                 </WRText>
                 
@@ -237,7 +292,7 @@ export default function SavingsInvestmentsScreen() {
                                         styles.investmentReturn,
                                         investment.return.isPositive ? styles.positiveReturn : styles.negativeReturn
                                     ]}>
-                                        {investment.return.isPositive ? '+' : ''}{investment.return.value.toFixed(2)} ({investment.return.percentage.toFixed(2)}%)
+                                        {investment.return.isPositive ? '+' : ''}R$ {investment.return.value.toFixed(2)} ({investment.return.percentage.toFixed(2)}%)
                                     </WRText>
                                 )}
                             </View>
@@ -245,6 +300,17 @@ export default function SavingsInvestmentsScreen() {
                     ))}
                 </View>
             </View>
+        )
+    }
+
+    return (
+        <UICard
+            style={styles.mainCard}
+            activeAccordion
+            accordionTitle="Poupança e investimentos"
+            accordionBeOpenDefault
+        >
+           <CardContent />
         </UICard>
     );
 }

@@ -3,9 +3,10 @@ import UIDivider from "@/components/UI/UIDivider";
 import UIIcon from "@/components/UI/UIIcon";
 import WRText from "@/components/wrappers/WRText";
 import { useAppTheme } from "@/context/theme-context";
-import { useTotalTransactionPeriod } from "@/context/transaction/total-transaction-period-context";
+import { IncomeBreakdown } from "@/types/HomeScreenAnalysisData";
+import { CryptUtil } from "@/utils/CryptoUtil";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import Constants from 'expo-constants';
 import { StyleSheet, View } from "react-native";
 
 interface IncomeSource {
@@ -16,42 +17,59 @@ interface IncomeSource {
     icon: React.ComponentProps<typeof Ionicons>['name'];
 }
 
-export default function IncomeBreakdownScreen() {
+interface IncomeBreakdownScreenProps {
+    analysis: IncomeBreakdown | undefined;
+}
+
+export default function IncomeBreakdownScreen({ analysis } : IncomeBreakdownScreenProps) {
+    const secretKey: string | undefined = Constants.expoConfig?.extra?.PLUGGY_CRYPT_SECRET;
+    if (!secretKey) {
+        throw new Error('Chave de criptografia não configurada. Verifique as variáveis de ambiente.');
+    }
+
     const { theme } = useAppTheme();
-    const { totalTransactionPeriod } = useTotalTransactionPeriod();
     
-    // Dados mockados para as fontes de receita
-    // Em uma implementação real, esses dados viriam da API
-    const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([
-        {
-            name: "Salário",
-            amount: 5000,
-            percentage: 70,
-            isRecurring: true,
-            icon: "cash"
-        },
-        {
-            name: "Freelance",
-            amount: 1500,
-            percentage: 21,
-            isRecurring: false,
-            icon: "laptop"
-        },
-        {
-            name: "Investimentos",
-            amount: 500,
-            percentage: 7,
-            isRecurring: false,
-            icon: "trending-up"
-        },
-        {
-            name: "Outros",
-            amount: 150,
-            percentage: 2,
-            isRecurring: false,
-            icon: "ellipsis-horizontal"
+    // Função para obter fontes de receita da análise ou fallback
+    const getIncomeSources = (): IncomeSource[] => {
+        if (!analysis || !analysis.incomeSources) {
+            // Fallback para dados mockados
+            return [
+                {
+                    name: "Salário",
+                    amount: 5000,
+                    percentage: 70,
+                    isRecurring: true,
+                    icon: "cash"
+                },
+                {
+                    name: "Freelance",
+                    amount: 1500,
+                    percentage: 21,
+                    isRecurring: false,
+                    icon: "laptop"
+                },
+                {
+                    name: "Investimentos",
+                    amount: 500,
+                    percentage: 7,
+                    isRecurring: false,
+                    icon: "trending-up"
+                }
+            ];
         }
-    ]);
+
+        return analysis.incomeSources.map(source => ({
+            name: CryptUtil.decrypt(source.name, secretKey),
+            amount: parseFloat(CryptUtil.decrypt(source.amount, secretKey)) || 0,
+            percentage: parseFloat(CryptUtil.decrypt(source.percentage, secretKey)) || 0,
+            isRecurring: source.isRecurring,
+            icon: CryptUtil.decrypt(source.icon, secretKey) as React.ComponentProps<typeof Ionicons>['name'] || "cash"
+        }));
+    };
+
+    const incomeSources = getIncomeSources();
+
+
     
     // Calcular totais
     const totalIncome = incomeSources.reduce((sum, source) => sum + source.amount, 0);
@@ -179,16 +197,21 @@ export default function IncomeBreakdownScreen() {
         legendText: {
             fontSize: 12,
             color: theme.colors.muted
+        },
+        loadingContainer: {
+            alignItems: "center",
+            justifyContent: 'center'
+        },
+        detailTitle: {
+            fontSize: 16, 
+            fontWeight: '500', 
+            marginTop: 16,
+            marginBottom: 12
         }
     });
 
-    return (
-        <UICard
-            style={styles.mainCard}
-            activeAccordion
-            accordionTitle="Receitas recorrentes vs. variáveis"
-            accordionBeOpenDefault
-        >
+    function CardContent() {
+        return (
             <View style={styles.container}>
                 <View style={styles.legendContainer}>
                     <View style={styles.legendItem}>
@@ -222,7 +245,7 @@ export default function IncomeBreakdownScreen() {
                     </View>
                 </View>
                 
-                <WRText style={{ fontSize: 16, fontWeight: '500', marginTop: 16, marginBottom: 12 }}>
+                <WRText style={styles.detailTitle}>
                     Detalhamento de receitas
                 </WRText>
                 
@@ -248,6 +271,17 @@ export default function IncomeBreakdownScreen() {
                     ))}
                 </View>
             </View>
+        )
+    }
+
+    return (
+        <UICard
+            style={styles.mainCard}
+            activeAccordion
+            accordionTitle="Receitas recorrentes vs. variáveis"
+            accordionBeOpenDefault
+        >
+            <CardContent />
         </UICard>
     );
 }

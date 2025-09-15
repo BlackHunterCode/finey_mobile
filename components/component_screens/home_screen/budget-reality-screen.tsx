@@ -2,8 +2,10 @@ import UICard from "@/components/UI/UICard";
 import UIIcon from "@/components/UI/UIIcon";
 import WRText from "@/components/wrappers/WRText";
 import { useAppTheme } from "@/context/theme-context";
+import { BudgetReality } from "@/types/HomeScreenAnalysisData";
+import { CryptUtil } from "@/utils/CryptoUtil";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import Constants from 'expo-constants';
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface BudgetCategory {
@@ -14,34 +16,57 @@ interface BudgetCategory {
     percentage: number;
 }
 
-export default function BudgetRealityScreen() {
+interface BudgetRealityScreenProps {
+    analysis: BudgetReality | undefined;
+}
+
+export default function BudgetRealityScreen({ analysis }: BudgetRealityScreenProps) {
+    const secretKey: string | undefined = Constants.expoConfig?.extra?.PLUGGY_CRYPT_SECRET;
+    if (!secretKey) {
+        throw new Error('Chave de criptografia não configurada. Verifique as variáveis de ambiente.');
+    }
+
     const { theme } = useAppTheme();
     
-    // Dados mockados para as categorias de orçamento
-    // Em uma implementação real, esses dados viriam da API
-    const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>([
-        {
-            name: "Lazer",
-            icon: "game-controller",
-            budgetAmount: 500,
-            spentAmount: 350,
-            percentage: 70
-        },
-        {
-            name: "Alimentação",
-            icon: "restaurant",
-            budgetAmount: 1000,
-            spentAmount: 800,
-            percentage: 80
-        },
-        {
-            name: "Transporte",
-            icon: "car",
-            budgetAmount: 600,
-            spentAmount: 300,
-            percentage: 50
+    // Função para obter categorias de orçamento da análise ou fallback
+    const getBudgetCategories = (): BudgetCategory[] => {
+        if (!analysis || !analysis.budgetCategories) {
+            // Fallback para dados mockados
+            return [
+                {
+                    name: "Lazer",
+                    icon: "game-controller",
+                    budgetAmount: 500,
+                    spentAmount: 350,
+                    percentage: 70
+                },
+                {
+                    name: "Alimentação",
+                    icon: "restaurant",
+                    budgetAmount: 1000,
+                    spentAmount: 800,
+                    percentage: 80
+                },
+                {
+                    name: "Transporte",
+                    icon: "car",
+                    budgetAmount: 600,
+                    spentAmount: 300,
+                    percentage: 50
+                }
+            ];
         }
-    ]);
+
+        return analysis.budgetCategories.map(category => ({
+            name: CryptUtil.decrypt(category.name, secretKey),
+            icon: CryptUtil.decrypt(category.icon, secretKey) as React.ComponentProps<typeof Ionicons>['name'] || "wallet",
+            budgetAmount: parseFloat(CryptUtil.decrypt(category.budgetAmount, secretKey)) || 0,
+            spentAmount: parseFloat(CryptUtil.decrypt(category.spentAmount, secretKey)) || 0,
+            percentage: parseFloat(CryptUtil.decrypt(category.percentage, secretKey)) || 0
+        }));
+    };
+
+    const budgetCategories = getBudgetCategories();
     
     const styles = StyleSheet.create({
         mainCard: {
@@ -134,6 +159,10 @@ export default function BudgetRealityScreen() {
         budgetDetailText: {
             fontSize: 12,
             color: theme.colors.muted
+        },
+        loadingContainer: {
+            alignItems: "center",
+            justifyContent: 'center'
         }
     });
 
@@ -144,13 +173,8 @@ export default function BudgetRealityScreen() {
         return styles.progressDanger;
     };
 
-    return (
-        <UICard
-            style={styles.mainCard}
-            activeAccordion
-            accordionTitle="Meta de gastos vs. realidade"
-            accordionBeOpenDefault
-        >
+    function CardContent() {
+        return (
             <View style={styles.container}>
                 <View style={styles.headerRow}>
                     <WRText style={styles.headerTitle}>Orçamentos definidos</WRText>
@@ -194,7 +218,18 @@ export default function BudgetRealityScreen() {
                         </View>
                     </View>
                 ))}
-            </View>
+            </View>    
+        )
+    }
+
+    return (
+        <UICard
+            style={styles.mainCard}
+            activeAccordion
+            accordionTitle="Meta de gastos vs. realidade"
+            accordionBeOpenDefault
+        >
+            <CardContent />
         </UICard>
     );
 }

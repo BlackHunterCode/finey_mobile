@@ -3,8 +3,9 @@ import { Props } from "@/types/JSXTypes";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
+import { StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import WRText from "../wrappers/WRText";
 
 /**
  * Componente de card para a interface do usuário
@@ -231,7 +232,7 @@ export default function UICard({
                         onPress={toggleAccordion} 
                         style={componentStyle.accordionHeader}
                     >
-                        <Text style={componentStyle.accordionTitle}>{accordionTitle}</Text>
+                        <WRText style={componentStyle.accordionTitle}>{accordionTitle}</WRText>
                         <Animated.View style={[componentStyle.iconContainer, animatedIconStyle]}>
                             <Ionicons 
                                 name="chevron-down" 

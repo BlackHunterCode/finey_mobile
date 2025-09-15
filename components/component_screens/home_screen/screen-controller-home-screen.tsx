@@ -214,7 +214,9 @@ export default function ScreenControllerHomeScreen() {
                     {isLoadingData ? (
                         <ActivityIndicator size="small" color={theme.colors.primary} />
                     ) : (
-                        <UIIcon name="calendar" size={20} />
+                        <WRText>
+                            <UIIcon name="calendar" size={20} />
+                        </WRText>
                     )}
                 </TouchableOpacity>
 

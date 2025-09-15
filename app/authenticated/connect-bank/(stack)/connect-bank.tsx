@@ -141,7 +141,6 @@ export default function ConnectBankScreen() {
     return (
         <>
             <Stack.Screen options={{ headerShown: true }} />
-            {/* <Image /> */}
             <WRScreenContainer allContentCenter>
                 <Image 
                     source={require("../../../../assets/images/hunter/hunter_rico.png")} 

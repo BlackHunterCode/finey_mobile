@@ -342,7 +342,6 @@ export default function UIDatePicker({
                             onPress={() => {
                                 if (!isDisabled) {
                                     setSelectedMonth(index);
-                                    // Se noModal=true e não requer confirmação, confirma imediatamente
                                     if (noModal && !requiresConfirmation) {
                                         const newDate = new Date(selectedYear, index, 1);
                                         onChange?.(newDate);
@@ -410,10 +409,10 @@ export default function UIDatePicker({
                         handleDateSelect(date);
                     }}
                     disabled={isDisabled}
-                    activeOpacity={0.5} // Mais responsivo
-                    delayPressIn={0} // Sem atraso para resposta imediata
-                    pressRetentionOffset={{top: 12, bottom: 12, left: 12, right: 12}} // Área maior para manter o toque
-                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}} // Área de toque maior
+                    activeOpacity={0.5}
+                    delayPressIn={0}
+                    pressRetentionOffset={{top: 12, bottom: 12, left: 12, right: 12}} 
+                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}} 
                 >
                     <WRText
                         style={[
@@ -902,7 +901,9 @@ export default function UIDatePicker({
                     }
                 }}
             >
-                <UIIcon name="chevron-down" size={24} color={theme.colors.primary} />
+                <WRText>
+                    <UIIcon name="chevron-down" size={24} color={theme.colors.primary} />
+                </WRText>
             </TouchableOpacity>
         );
     };
@@ -930,7 +931,6 @@ export default function UIDatePicker({
         return (
         <View style={styles.modalContent}>
             {renderScrollIndicator()}
-            {/* Renderiza as setas flutuantes para navegação se habilitadas */}
             {showNavigationArrows && renderTopArrow()}
             {showNavigationArrows && renderBottomArrow()}
             <View style={{flex: 1, width: '100%', height: '100%'}} pointerEvents="box-none">

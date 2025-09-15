@@ -2,41 +2,63 @@ import UICard from "@/components/UI/UICard";
 import UIIcon from "@/components/UI/UIIcon";
 import WRText from "@/components/wrappers/WRText";
 import { useAppTheme } from "@/context/theme-context";
-import { useTotalTransactionPeriod } from "@/context/transaction/total-transaction-period-context";
-import { useEffect, useState } from "react";
+import { CurrentBalanceProjection } from "@/types/HomeScreenAnalysisData";
+import { CryptUtil } from "@/utils/CryptoUtil";
+import Constants from 'expo-constants';
 import { StyleSheet, View } from "react-native";
 
-export default function CurrentBalanceProjectionScreen() {
+// Adicionar função de log
+function logStyleValue(name: any, value: any) {
+  console.log(`[CurrentBalanceProjection] ${name}:`, JSON.stringify(value));
+  return value;
+}
+
+interface CurrentBalanceProjectionScreenProps {
+    analysis: CurrentBalanceProjection | undefined;
+}
+
+export default function CurrentBalanceProjectionScreen({ analysis } : CurrentBalanceProjectionScreenProps) {
+    console.log("[CurrentBalanceProjection] Renderizando componente", analysis ? "com dados" : "sem dados");
+    
+    const secretKey: string | undefined = Constants.expoConfig?.extra?.PLUGGY_CRYPT_SECRET;
+    if (!secretKey) {
+        throw new Error('Chave de criptografia não configurada. Verifique as variáveis de ambiente.');
+    }
+   
     const { theme } = useAppTheme();
-    const { totalTransactionPeriod } = useTotalTransactionPeriod();
     
-    // Estados para os dados de saldo e projeção
-    const [currentBalance, setCurrentBalance] = useState(0);
-    const [projectedBalance, setProjectedBalance] = useState(0);
-    const [daysLeftInMonth, setDaysLeftInMonth] = useState(0);
-    const [dailyAvgExpense, setDailyAvgExpense] = useState(0);
-    
-    useEffect(() => {
-        // Calcular dias restantes no mês
-        const today = new Date();
-        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-        const daysLeft = lastDayOfMonth - today.getDate();
-        setDaysLeftInMonth(daysLeft);
-        
-        // Calcular saldo atual (ganhos - gastos)
-        const balance = (totalTransactionPeriod?.totalEarnings || 0) - (totalTransactionPeriod?.totalExpenses || 0);
-        setCurrentBalance(balance);
-        
-        // Calcular média diária de gastos
-        const daysPassed = today.getDate();
-        const avgDailyExpense = daysPassed > 0 ? (totalTransactionPeriod?.totalExpenses || 0) / daysPassed : 0;
-        setDailyAvgExpense(avgDailyExpense);
-        
-        // Projetar saldo para o fim do mês
-        const projectedExpenses = avgDailyExpense * daysLeft;
-        const projected = balance - projectedExpenses;
-        setProjectedBalance(projected);
-    }, [totalTransactionPeriod]);
+    const getProjectionData = () => {
+        if(!analysis) {
+            console.log("[CurrentBalanceProjection] Análise indefinida");
+            throw new Error("O objeto de projeção do financial nao esta correto.");
+        }
+
+        try {
+            const currentBalance = parseFloat(CryptUtil.decrypt(analysis.currentBalance, secretKey)) || 0;
+            const projectedBalance = parseFloat(CryptUtil.decrypt(analysis.projectedBalance, secretKey)) || 0;
+            const dailyAvgExpense = parseFloat(CryptUtil.decrypt(analysis.dailyAverageExpense, secretKey)) || 0;
+            
+            console.log("[CurrentBalanceProjection] Dados decodificados:", {
+                currentBalance,
+                projectedBalance,
+                daysLeftInMonth: analysis.daysLeftInMonth,
+                dailyAvgExpense
+            });
+            
+            return {
+                currentBalance,
+                projectedBalance,
+                daysLeftInMonth: analysis.daysLeftInMonth || 0,
+                dailyAvgExpense
+            };
+        } catch (error) {
+            console.error("[CurrentBalanceProjection] Erro ao decodificar dados:", error);
+            throw error;
+        }
+    };
+
+    const projectionData = getProjectionData();
+    const { currentBalance, projectedBalance, daysLeftInMonth, dailyAvgExpense } = projectionData;
     
     const styles = StyleSheet.create({
         mainCard: {
@@ -111,36 +133,36 @@ export default function CurrentBalanceProjectionScreen() {
             fontSize: 14,
             fontWeight: '500',
             color: theme.colors.text
+        },
+        loadingContainer: {
+            alignItems: "center",
+            justifyContent: 'center'
         }
     });
 
-    return (
-        <UICard
-            style={styles.mainCard}
-            activeAccordion
-            accordionTitle="Saldo atual e projeção"
-            accordionBeOpenDefault
-        >
+    function CardContent() {
+        console.log("[CurrentBalanceProjection] Renderizando CardContent");
+        return (
             <View style={styles.container}>
                 <View style={styles.balanceRow}>
                     <View style={styles.balanceColumn}>
                         <WRText style={styles.balanceTitle}>Saldo atual</WRText>
-                        <WRText style={[
+                        <WRText style={logStyleValue("balanceValueStyle", [
                             styles.balanceValue,
                             currentBalance > 0 ? styles.positiveBalance : 
-                            currentBalance < 0 ? styles.negativeBalance : null
-                        ]}>
+                            currentBalance < 0 ? styles.negativeBalance : {}
+                        ])}>
                             R$ {currentBalance.toFixed(2)}
                         </WRText>
                     </View>
                     
                     <View style={styles.balanceColumn}>
                         <WRText style={styles.balanceTitle}>Projeção para o fim do mês</WRText>
-                        <WRText style={[
+                        <WRText style={logStyleValue("projectedBalanceValueStyle", [
                             styles.balanceValue,
                             projectedBalance > 0 ? styles.positiveBalance : 
-                            projectedBalance < 0 ? styles.negativeBalance : null
-                        ]}>
+                            projectedBalance < 0 ? styles.negativeBalance : {}
+                        ])}>
                             R$ {projectedBalance.toFixed(2)}
                         </WRText>
                     </View>
@@ -172,6 +194,17 @@ export default function CurrentBalanceProjectionScreen() {
                     </View>
                 </View>
             </View>
+        )
+    }
+
+    return (
+        <UICard
+            style={styles.mainCard}
+            activeAccordion
+            accordionTitle="Saldo atual e projeção"
+            accordionBeOpenDefault
+        >
+            <CardContent />
         </UICard>
     );
 }

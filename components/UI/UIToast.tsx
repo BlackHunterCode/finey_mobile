@@ -162,7 +162,6 @@ export default function UIToast({
           )}
           
           <View>
-            {/* Exibição do trace ID no footer */}
             {traceId && (
               <View style={styles.traceContainer}>
                 <Text style={styles.traceText}>trace-id: {traceId}</Text>

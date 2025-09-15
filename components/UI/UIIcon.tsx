@@ -2,7 +2,7 @@ import { useAppTheme } from '@/context/theme-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { JSX } from 'react';
-import { Image, ImageSourcePropType, StyleProp, StyleSheet, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Image, ImageSourcePropType, StyleProp, StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 
 interface UIIconProps {
@@ -40,14 +40,41 @@ export default function UIIcon({
   const { theme } = useAppTheme();
   const iconColor = color || theme.colors.primary;
   const iconBackgroundColor = backgroundColor || theme.icons.backgroundColor;
-  const renderIcon = () => (
-    <Ionicons
-      name={name}
-      size={size}
-      color={iconColor}
-      style={iconStyle}
-    />
-  );
+  
+  // Função para detectar se é um emoji
+  const isEmoji = (str: string): boolean => {
+    const emojiRegex = /^[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]$/u;
+    return emojiRegex.test(str);
+  };
+  
+  const renderIcon = () => {
+    // Se name não existe, retorna null
+    if (!name) return null;
+    
+    // Se é um emoji, renderiza como Text
+    if (isEmoji(name)) {
+      return (
+        <Text style={[{ fontSize: size, color: iconColor }, iconStyle]}>
+          {name}
+        </Text>
+      );
+    }
+    
+    // Se não é um emoji, tenta renderizar como ícone do Ionicons
+    try {
+      return (
+        <Ionicons
+          name={name as React.ComponentProps<typeof Ionicons>['name']}
+          size={size}
+          color={iconColor}
+          style={iconStyle}
+        />
+      );
+    } catch (error) {
+      // Se não é um ícone válido do Ionicons, lança erro
+      throw new Error(`Ícone inválido: "${name}" não é um ícone válido do Ionicons nem um emoji válido.`);
+    }
+  };
 
   const staticIconStyles = StyleSheet.create({
     image: {
@@ -60,7 +87,7 @@ export default function UIIcon({
     <Image source={staticSource} style={staticIconStyles.image} resizeMode="contain" />
   );
 
-  const icon: JSX.Element = (staticSource != undefined) ? renderStaticIcon() : renderIcon(); 
+  const icon: JSX.Element | null = (staticSource != undefined) ? renderStaticIcon() : renderIcon(); 
 
   if (withBackground) {
     return (
