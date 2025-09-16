@@ -277,8 +277,8 @@ export default function FinancialResumeHomeScreen({ analysis } : FinancialResume
                                 <WRText style={[styles.summaryCardValue]}>
                                     R$ {financialData.ganhos.valor.toFixed(2)}
                                 </WRText>
-                                {financialData.ganhos.status !== "stable" && financialData.ganhos.percentual &&
-                                    renderStatusIndicator(financialData.ganhos.status, financialData.ganhos.percentual)}
+                                {financialData.ganhos.status !== "stable" && financialData.ganhos.percentual ? 
+                                    renderStatusIndicator(financialData.ganhos.status, financialData.ganhos.percentual) : (<></>)}
                             </View>
                         </View>
                     </UICard>
@@ -289,8 +289,8 @@ export default function FinancialResumeHomeScreen({ analysis } : FinancialResume
                                 <WRText style={[styles.summaryCardValue, { color: "#FF5252" }]}>
                                     - R$ {financialData.gastos.valor.toFixed(2)}
                                 </WRText>
-                                {financialData.gastos.status !== "stable" && financialData.gastos.percentual &&
-                                    renderStatusIndicator(financialData.gastos.status, financialData.gastos.percentual)}
+                                {financialData.gastos.status !== "stable" && financialData.gastos.percentual ?
+                                    renderStatusIndicator(financialData.gastos.status, financialData.gastos.percentual) : (<></>)}
                             </View>
                         </View>
                     </UICard>
