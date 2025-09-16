@@ -125,14 +125,14 @@ export default function AIInsightsScreen() {
                             <View style={styles.insightContent}>
                                 <WRText style={styles.insightText}>{insight.text}</WRText>
                                 
-                                {insight.actionText && (
+                                {insight.actionText ? (
                                     <TouchableOpacity 
                                         style={styles.actionButton}
                                         onPress={insight.onAction}
                                     >
                                         <WRText style={styles.actionButtonText}>{insight.actionText}</WRText>
                                     </TouchableOpacity>
-                                )}
+                                ) : (<></>)}
                             </View>
                         </View>
                     </View>

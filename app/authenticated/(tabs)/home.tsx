@@ -81,35 +81,11 @@ export default function HomeScreen() {
   }, [isDark, authObject]);
 
   function HomeContent() {
-    console.log("[Home] Renderizando HomeContent com análise:", analysis ? "disponível" : "indisponível");
-    
-    // Movendo os console.log para fora do JSX
-    useEffect(() => {
-      console.log("[Home] Antes de renderizar CurrentBalanceProjectionScreen");
-      console.log("[Home] Antes de renderizar ExpenseCategoriesScreen");
-      console.log("[Home] Antes de renderizar BudgetRealityScreen");
-      console.log("[Home] Antes de renderizar IncomeBreakdownScreen");
-      console.log("[Home] Antes de renderizar SavingsInvestmentsScreen");
-      console.log("[Home] Antes de renderizar NewsHomeScreen");
-      console.log("[Home] HomeContent renderizado completamente");
-    }, []);
-    
-    // Adicionando logs para debug
-    console.log("[Home] Verificando props dos componentes:");
-    console.log("[Home] FinancialResumeHomeScreen props:", analysis?.financialSummary ? "dados presentes" : "dados ausentes");
-    console.log("[Home] CurrentBalanceProjectionScreen props:", analysis?.currentBalanceProjection ? "dados presentes" : "dados ausentes");
-    console.log("[Home] ExpenseCategoriesScreen props:", analysis?.expenseCategories ? "dados presentes" : "dados ausentes");
-    console.log("[Home] BudgetRealityScreen props:", analysis?.budgetReality ? "dados presentes" : "dados ausentes");
-    console.log("[Home] IncomeBreakdownScreen props:", analysis?.incomeBreakdown ? "dados presentes" : "dados ausentes");
-    console.log("[Home] SavingsInvestmentsScreen props:", analysis?.savingsInvestments ? "dados presentes" : "dados ausentes");
-    
     // Envolvendo cada componente em um try-catch para identificar qual está causando o erro
     const renderComponent = (Component: any, props: any, name: string) => {
       try {
-        console.log(`[Home] Tentando renderizar ${name}`);
         return <Component {...props} />;
       } catch (error) {
-        console.error(`[Home] Erro ao renderizar ${name}:`, error);
         return <Text>Erro ao renderizar {name}</Text>;
       }
     };

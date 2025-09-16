@@ -197,11 +197,11 @@ export default function ScreenControllerHomeScreen() {
             <View style={styles.rowContainer}>
                 <WRText style={styles.dateReference}>Data de referência</WRText>
                 {
-                    selectedBanks && selectedBanks.length > 0 && (
+                    selectedBanks && selectedBanks.length > 0 ? (
                         <>
                             <WRText style={styles.dateReference}>Bancos conectados</WRText>
                         </>
-                    )
+                    ) : (<></>)
                 }
             </View>
             <View style={[styles.rowContainer, { marginTop: 8 }]}>
@@ -270,7 +270,7 @@ export default function ScreenControllerHomeScreen() {
                     )}
                 </UIModal>
                 { 
-                    selectedBanks && selectedBanks.length > 0 && (
+                    selectedBanks && selectedBanks.length > 0 ? (
                         <View style={{width: "30%"}}>
                             <UIList
                                 items={getBankListItems()}
@@ -285,7 +285,7 @@ export default function ScreenControllerHomeScreen() {
                                 showImages
                             />
                         </View>
-                    )
+                    ) : (<></>)
                 }
             </View>
         </View>

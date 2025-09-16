@@ -71,7 +71,6 @@ export default function LearnScreen() {
   // Função para navegar para o onboarding
   const startOnboarding = () => {
     // Aqui você implementaria a navegação para o onboarding
-    console.log("Iniciando onboarding");
   };
 
   // Função para avançar para o próximo feedback

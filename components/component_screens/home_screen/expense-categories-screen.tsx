@@ -151,42 +151,44 @@ export default function ExpenseCategoriesScreen({ analysis } : ExpenseCategories
         console.log("[ExpenseCategories] Renderizando CardContent");
         return (
             <View style={styles.container}>
-                {categories.map((category, index) => {
-                    console.log(`[ExpenseCategories] Renderizando categoria ${index}:`, category.name);
-                    return (
-                    <View key={index} style={styles.categoryItem}>
-                        <View style={styles.categoryHeader}>
-                            <View style={styles.categoryTitleContainer}>
-                                <View style={styles.categoryIcon}>
-                                    <UIIcon name={category.icon} size={20} color={theme.colors.primary} />
-                                </View>
-                                <WRText style={styles.categoryTitle}>{category.name}</WRText>
-                            </View>
-                            <WRText style={styles.categoryAmount}>R$ {category.amount.toFixed(2)}</WRText>
+            {categories.map((category, index) => {
+                console.log(`[ExpenseCategories] Renderizando categoria ${index}:`, category.name);
+                return (
+                <View key={index} style={styles.categoryItem}>
+                    <View style={styles.categoryHeader}>
+                    <View style={styles.categoryTitleContainer}>
+                        <View style={styles.categoryIcon}>
+                        <UIIcon name={category.icon} size={20} color={theme.colors.primary} />
                         </View>
-                        
-                        <View style={styles.progressBarContainer}>
-                            <View style={[styles.progressBar, { width: `${category.percentage}%` }]} />
-                        </View>
-                        
-                        {category.comparison ? (
-                            <View style={styles.comparisonContainer}>
-                                <UIIcon 
-                                    name={category.comparison.increased ? "arrow-up" : "arrow-down"} 
-                                    size={12} 
-                                    color={category.comparison.increased ? '#FF5252' : '#00C853'} 
-                                />
-                                <WRText style={logStyleValue(`comparisonTextStyle_${index}`, [
-                                    styles.comparisonText,
-                                    category.comparison.increased ? styles.increaseText : styles.decreaseText
-                                ])}>
-                                    {category.comparison.percentage}% {category.comparison.increased ? 'a mais' : 'a menos'} que no mês anterior
-                                </WRText>
-                            </View>
-                        ) : (<></>)}
-                        )}
+                        <WRText style={styles.categoryTitle}>{category.name}</WRText>
                     </View>
-                );})}
+                    <WRText style={styles.categoryAmount}>R$ {category.amount.toFixed(2)}</WRText>
+                    </View>
+
+                    <View style={styles.progressBarContainer}>
+                    <View style={[styles.progressBar, { width: `${category.percentage}%` }]} />
+                    </View>
+
+                    {category.comparison && (
+                    <View style={styles.comparisonContainer}>
+                        <UIIcon
+                        name={category.comparison.increased ? "arrow-up" : "arrow-down"}
+                        size={12}
+                        color={category.comparison.increased ? '#FF5252' : '#00C853'}
+                        />
+                        <WRText
+                        style={logStyleValue(`comparisonTextStyle_${index}`, [
+                            styles.comparisonText,
+                            category.comparison.increased ? styles.increaseText : styles.decreaseText
+                        ])}
+                        >
+                        {category.comparison.percentage}% {category.comparison.increased ? 'a mais' : 'a menos'} que no mês anterior
+                        </WRText>
+                    </View>
+                    )}
+                </View>
+                );
+            })}
             </View>
         )
     }
