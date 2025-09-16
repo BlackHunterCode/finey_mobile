@@ -184,6 +184,7 @@ export default function ExpenseCategoriesScreen({ analysis } : ExpenseCategories
                                 </WRText>
                             </View>
                         ) : (<></>)}
+                        )}
                     </View>
                 );})}
             </View>
