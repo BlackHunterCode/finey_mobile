@@ -2,7 +2,7 @@ import { useAppTheme } from '@/context/theme-context';
 import { Props } from '@/types/JSXTypes';
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, Pressable, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import WRText from '../wrappers/WRText';
 
 interface TabItem {
@@ -143,20 +143,37 @@ export default function UIPageMan({
   useEffect(() => {
     if (tabPositions[activeTabId] !== undefined && tabWidths[activeTabId] !== undefined) {
       // Anima o indicador para a posição da tab ativa
-      indicatorPosition.value = withSpring(tabPositions[activeTabId], {
-        damping: 20,
-        stiffness: 90,
-      });
-      indicatorWidth.value = withSpring(tabWidths[activeTabId], {
-        damping: 20,
-        stiffness: 90,
-      });
+      const currentPosition = tabPositions[activeTabId];
+      const currentWidth = tabWidths[activeTabId];
       
-      // Centraliza a tab ativa no scroll view
-      if (scrollViewRef.current) {
+      // Centraliza a tab ativa no scroll view primeiro
+      if (scrollViewRef.current && scrollableTabs) {
         scrollViewRef.current.scrollTo({
-          x: Math.max(0, tabPositions[activeTabId] - windowWidth / 2 + tabWidths[activeTabId] / 2),
+          x: Math.max(0, currentPosition - windowWidth / 2 + currentWidth / 2),
           animated: true
+        });
+        
+        // Pequeno atraso para garantir que o scroll foi concluído antes de animar o indicador
+        setTimeout(() => {
+          // Atualiza a posição e largura do indicador com animação
+          indicatorPosition.value = withSpring(currentPosition, {
+            damping: 20,
+            stiffness: 90,
+          });
+          indicatorWidth.value = withSpring(currentWidth, {
+            damping: 20,
+            stiffness: 90,
+          });
+        }, 50);
+      } else {
+        // Atualiza imediatamente se não houver scroll
+        indicatorPosition.value = withSpring(currentPosition, {
+          damping: 20,
+          stiffness: 90,
+        });
+        indicatorWidth.value = withSpring(currentWidth, {
+          damping: 20,
+          stiffness: 90,
         });
       }
       
@@ -175,13 +192,22 @@ export default function UIPageMan({
         onTabChange(activeTabId);
       }
     }
-  }, [activeTabId, tabPositions, tabWidths, indicatorPosition, indicatorWidth, contentTranslateX, windowWidth]);
+  }, [activeTabId, tabPositions, tabWidths, indicatorPosition, indicatorWidth, contentTranslateX, windowWidth, tabs, scrollableTabs, animationDuration, onTabChange]);
   
   // Estilo animado para o indicador
   const indicatorAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateX: indicatorPosition.value }],
       width: indicatorWidth.value,
+      // Garantindo que o indicador fique visível e bem posicionado
+      position: 'absolute',
+      bottom: 0,
+      height: 3,
+      backgroundColor: theme.colors.primary,
+      borderTopLeftRadius: 3,
+      borderTopRightRadius: 3,
+      zIndex: 1,
+      ...(indicatorStyle as object || {})
     };
   });
   
@@ -219,9 +245,18 @@ export default function UIPageMan({
   
   // Função para medir a largura e posição de cada tab
   const measureTab = useCallback((tabId: string, width: number, x: number) => {
+    // Armazena a largura da tab
     setTabWidths(prev => ({ ...prev, [tabId]: width }));
+    
+    // Armazena a posição da tab
     setTabPositions(prev => ({ ...prev, [tabId]: x }));
-  }, []);
+    
+    // Se for a tab ativa, atualiza imediatamente o indicador
+    if (tabId === activeTabId) {
+      indicatorPosition.value = x;
+      indicatorWidth.value = width;
+    }
+  }, [activeTabId, indicatorPosition, indicatorWidth]);
   
   // Memoize styles para melhorar a performance
   const styles = React.useMemo(() => StyleSheet.create({
@@ -271,12 +306,17 @@ export default function UIPageMan({
       left: 0,
       height: 3,
       width: '100%',
+      overflow: 'visible',
+      zIndex: 1,
     },
     indicator: {
+      position: 'absolute',
       height: '100%',
       backgroundColor: theme.colors.primary,
       borderTopLeftRadius: 3,
       borderTopRightRadius: 3,
+      bottom: 0,
+      left: 0,
       ...(indicatorStyle as ViewStyle),
     },
     contentContainer: {
@@ -286,76 +326,10 @@ export default function UIPageMan({
     pageContainer: {
       width: windowWidth,
     },
-    ripple: {
-      position: 'absolute',
-      backgroundColor: theme.colors.primary,
-      opacity: 0.12,
-      borderRadius: 100,
-      overflow: 'hidden', // Garantir que o ripple não ultrapasse seus limites
-    },
   }), [style, tabsContainerStyle, tabStyle, activeTabStyle, tabTextStyle, activeTabTextStyle, indicatorStyle, theme, tabs.length, windowWidth]);
   
-  // Função para renderizar uma tab com efeito de ripple
+  // Função para renderizar uma tab usando o ripple nativo
   const renderTab = useCallback((tab: TabItem, isFixed: boolean = false) => {
-    const [rippleVisible, setRippleVisible] = useState(false);
-    const [ripplePosition, setRipplePosition] = useState({ x: 0, y: 0 });
-    const rippleSize = useSharedValue(0);
-    const rippleOpacity = useSharedValue(0);
-    
-    // Garantir que temos acesso à largura da tab mais atualizada
-    const currentTabWidth = tabWidths[tab.id];
-    
-    const handlePressIn = (event: any) => {
-      if (tab.disabled) return;
-      
-      // Posição do toque relativa ao componente
-      const { locationX, locationY } = event.nativeEvent;
-      
-      // Obtém a largura da tab para limitar o tamanho do ripple
-      // Garantir que temos um valor válido para a largura da tab
-      const tabWidth = currentTabWidth || 100;
-      
-      // Calcula o tamanho máximo do ripple para que não ultrapasse os limites da tab
-      // Reduzindo para que o ripple fique totalmente contido na tab
-      const maxRippleSize = Math.min(tabWidth * 0.25, 40);
-      
-      // Ajusta a posição do ripple para garantir que fique totalmente contido na tab
-      // Limita a posição X para que o ripple não ultrapasse as bordas laterais
-      const safeX = Math.max(Math.min(locationX, tabWidth - maxRippleSize/2), maxRippleSize/2);
-      // Limita também a posição Y para garantir contenção vertical
-      const safeY = Math.max(Math.min(locationY, 24 - maxRippleSize/2), maxRippleSize/2);
-      
-      setRipplePosition({ x: safeX, y: safeY });
-      setRippleVisible(true);
-      
-      rippleSize.value = 0;
-      rippleOpacity.value = 0.003;
-      
-      rippleSize.value = withTiming(maxRippleSize, { 
-        duration: 60,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1)
-      });
-      rippleOpacity.value = withTiming(0, { 
-        duration: 60,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1)
-      });
-    };
-    
-    const rippleStyle = useAnimatedStyle(() => {
-      return {
-        width: rippleSize.value,
-        height: rippleSize.value,
-        borderRadius: rippleSize.value / 2,
-        opacity: rippleOpacity.value,
-        transform: [
-          { translateX: -rippleSize.value / 2 },
-          { translateY: -rippleSize.value / 2 },
-        ],
-        left: ripplePosition.x,
-        top: ripplePosition.y,
-      };
-    });
-    
     return (
       <Pressable
         key={tab.id}
@@ -363,20 +337,15 @@ export default function UIPageMan({
           styles.tab,
           isFixed && { flex: 1 },
           activeTabId === tab.id && styles.activeTab,
-          { overflow: 'hidden' }, // Garantir que o ripple fique contido na tab
         ]}
         onPress={() => handleTabPress(tab.id)}
-        onPressIn={handlePressIn}
         disabled={tab.disabled}
         onLayout={(e) => {
           const { width, x } = e.nativeEvent.layout;
           measureTab(tab.id, width, x);
         }}
-        android_ripple={{ color: 'transparent' }}
+        android_ripple={{ color: theme.colors.primary + '20' }} // Cor primária com 20% de opacidade
       >
-        {rippleVisible ? (
-          <Animated.View style={[styles.ripple, rippleStyle]} />
-        ) : (<></>)}
         <WRText
           style={[
             styles.tabText,
@@ -388,7 +357,7 @@ export default function UIPageMan({
         </WRText>
       </Pressable>
     );
-  }, [activeTabId, handleTabPress, styles, tabWidths]);
+  }, [activeTabId, handleTabPress, measureTab, styles, theme.colors.primary]);
   
   return (
     <View style={styles.container}>
@@ -401,16 +370,20 @@ export default function UIPageMan({
             contentContainerStyle={styles.tabsScrollView}
           >
             {tabs.map((tab) => renderTab(tab))}
+            
+            {showIndicator && (
+              <Animated.View style={indicatorAnimatedStyle} />
+            )}
           </ScrollView>
         ) : (
-          tabs.map((tab) => renderTab(tab, true))
-        )}
-        
-        {showIndicator ? (
-          <View style={styles.indicatorContainer}>
-            <Animated.View style={[styles.indicator, indicatorAnimatedStyle]} />
+          <View style={{ flexDirection: 'row', width: '100%' }}>
+            {tabs.map((tab) => renderTab(tab, true))}
+            
+            {showIndicator && (
+              <Animated.View style={indicatorAnimatedStyle} />
+            )}
           </View>
-        ) : (<></>)}
+        )}
       </View>
       
       <Animated.View style={[styles.contentContainer, contentAnimatedStyle]}>
