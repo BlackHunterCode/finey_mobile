@@ -1,17 +1,10 @@
-import UICard from "@/components/UI/UICard";
+import UIPageManExample from "@/components/component_screens/home_screen/UIPageManExample";
 import WRScreenContainer from "@/components/wrappers/WRScreenContainer";
-import WRText from "@/components/wrappers/WRText";
 
 export default function Teste() {
     return (
         <WRScreenContainer>
-            <WRText>Teste carai</WRText>
-            <UICard
-                href=""
-                openStack
-            >
-                <WRText>Card ye</WRText>
-            </UICard>
+           <UIPageManExample />
         </WRScreenContainer>
     )
 };
