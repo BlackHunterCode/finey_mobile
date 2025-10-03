@@ -8,9 +8,11 @@ import UIDropInfo from '@/components/UI/UIDropInfo';
 import UIToggle from '@/components/UI/UIToggle';
 import WRScreenContainer from '@/components/wrappers/WRScreenContainer';
 import WRText from '@/components/wrappers/WRText';
+import UICard from '@/components/UI/UICard';
+import UIButton from '@/components/UI/UIButton';
 import { useAppTheme } from '@/context/theme-context';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Button, StyleSheet, Text, View } from 'react-native';
 
 export default function NotificationConfigurationScreen() {
     const { theme, isDark } = useAppTheme();
@@ -83,10 +85,57 @@ export default function NotificationConfigurationScreen() {
             </UIDropInfo>
             <View style={styles.containerEdit}>
               <WRText style={[styles.textCenter, { fontSize: 20, fontWeight: 'bold', marginBottom: 20 }]}>Preferência de Entrega</WRText>
-              <View style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                <Text style={{ color: isDark ? '#FFFFFF' : '#000000' }}>Método de Recebimento</Text>
-                <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Email</Text>
+              <View style={{alignItems: 'center', justifyContent: 'space-between'}}>
+                <View>
+                  <Text style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 }}>Método de Recebimento</Text>
+                  <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Email</Text>
+                </View>
+                <Button title="Editar" onPress={() => {}} />
               </View>
+              <View style={{alignItems: 'center', justifyContent: 'space-between'}}>
+                <View>
+                  <Text style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 }}>Transação Incomum</Text>
+                  <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>08:00 - 22:00</Text>
+                </View>
+                <Button title="Editar" onPress={() => {}} />
+              </View>
+            </View>
+            <View style={styles.containerEdit}>
+              <WRText style={[styles.textCenter, { fontSize: 20, fontWeight: 'bold', marginBottom: 20 }]}>Modo Concentração</WRText>
+              <View style={{alignItems: 'center', justifyContent: 'space-between'}}>
+                <Button title="Ativar por 1h" onPress={() => {}} />
+                <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Configurar Horários</Text>
+                <UICard 
+                style={{ marginBottom: 6, borderRadius: 0 }}
+                href='/'
+                openStack
+                >
+                  <View style={[styles.rowContainer, { gap: 14 }]}>
+                    <WRText>Personalizar po Projeto</WRText>
+                    <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Explicação do que esse link vai fazer.</Text>
+                  </View>
+                </UICard>
+                <UICard 
+                style={{ marginBottom: 6, borderRadius: 0 }}
+                href='/'
+                openStack
+                >
+                  <View style={[styles.rowContainer, { gap: 14 }]}>
+                    <WRText>Configurar Urgências</WRText>
+                    <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Explicação do que esse link vai fazer.</Text>
+                  </View>
+                </UICard>
+              </View>
+            </View>
+            <View>
+              <UIButton
+                text='Salvar Alterações'
+                onPress={() => {}}
+              />
+              <UIButton
+                text='Restaurações Config Padrão'
+                onPress={() => {}}
+              />
             </View>
         </WRScreenContainer>
     )
