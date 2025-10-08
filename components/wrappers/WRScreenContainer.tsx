@@ -12,6 +12,11 @@ interface WRScreenContainerProps extends ScrollViewProps {
    * Com isso a opção de Scroll Refresh não estará disponível, você terá que criar um botão separado para realizar a operação de refresh 
    * */
   allContentCenter?: boolean;
+  /** 
+   * Se true, renderiza como View em vez de ScrollView, mantendo os mesmos estilos sem centralizar o conteúdo
+   * */
+  asView?: boolean;
+  scrollEnabled?: boolean;
 }
 
 const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRScreenContainerProps>((
@@ -23,6 +28,8 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
     onRefresh,
     refreshing = false,
     allContentCenter = false,
+    asView = false,
+    scrollEnabled = true,
     ...props
   }, ref) => {
     const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -76,8 +83,9 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
             ...(Array.isArray(style) ? style : [style])
           ]}
           contentContainerStyle={[componentStyle.contentContainer, contentContainerStyle]}
-          showsVerticalScrollIndicator={true}
-          scrollEnabled={true}
+          showsVerticalScrollIndicator={scrollEnabled}
+          scrollEnabled={scrollEnabled}
+          nestedScrollEnabled={scrollEnabled}
           bounces={true}
           alwaysBounceVertical={true}
           keyboardShouldPersistTaps="handled"
@@ -116,15 +124,31 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
       )
     }
 
+    function SimpleViewComponent() {
+      return (
+        <>
+          <View 
+          {...props}
+          style={[
+            componentStyle.screenContainer, 
+            ...(Array.isArray(style) ? style : [style])
+          ]}
+          >
+            {children}
+          </View>
+        </>
+      )
+    }
+
     if(useSafeAreaView) {
       return (
         <SafeAreaView style={{flex: 1}}>
-          {allContentCenter ? ViewComponent() : ScrollViewComponent()}
+          {allContentCenter ? ViewComponent() : (asView ? SimpleViewComponent() : ScrollViewComponent())}
         </SafeAreaView>
       )
     }
     else {
-      return allContentCenter ? ViewComponent() : ScrollViewComponent();
+      return allContentCenter ? ViewComponent() : (asView ? SimpleViewComponent() : ScrollViewComponent());
     }
   } 
 );

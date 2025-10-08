@@ -5,7 +5,7 @@ import { Dimensions, Pressable, ScrollView, StyleProp, StyleSheet, View, ViewSty
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import WRText from '../wrappers/WRText';
 
-interface TabItem {
+export interface TabItem {
   /**
    * Identificador único da tab
    */
@@ -92,6 +92,12 @@ interface UIPageManProps extends Omit<Props, 'children'> {
   scrollableTabs?: boolean;
   
   /**
+   * Se deve centralizar as tabs no container
+   * @default false
+   */
+  centerTabs?: boolean;
+  
+  /**
    * Se deve animar a transição entre tabs
    * @default true
    */
@@ -123,6 +129,7 @@ export default function UIPageMan({
   showIndicator = true,
   indicatorStyle,
   scrollableTabs = true,
+  centerTabs = false,
   animateTransition = true,
   animationDuration = 300,
   children
@@ -131,43 +138,44 @@ export default function UIPageMan({
   const [activeTabId, setActiveTabId] = useState<string>(initialTabId || (tabs.length > 0 ? tabs[0].id : ''));
   const [tabWidths, setTabWidths] = useState<{ [key: string]: number }>({});
   const [tabPositions, setTabPositions] = useState<{ [key: string]: number }>({});
+  const [tabRefs, setTabRefs] = useState<{ [key: string]: React.RefObject<View | null> }>({});
   const scrollViewRef = useRef<ScrollView>(null);
+  const tabsContainerRef = useRef<View>(null);
   const windowWidth = Dimensions.get('window').width;
+  const [scrollX, setScrollX] = useState(0);
+  
+  // Inicializa refs para cada tab
+  useEffect(() => {
+    const refs: { [key: string]: React.RefObject<View | null> } = {};
+    tabs.forEach(tab => {
+      refs[tab.id] = React.createRef<View | null>();
+    });
+    setTabRefs(refs as unknown as { [key: string]: React.RefObject<View> });
+  }, [tabs]);
   
   // Valores animados
   const indicatorPosition = useSharedValue(0);
   const indicatorWidth = useSharedValue(0);
   const contentTranslateX = useSharedValue(0);
   
-  // Atualiza a posição do indicador quando a tab ativa muda
+  // Atualiza a posição do indicador quando a tab ativa ou o scrollX mudam
   useEffect(() => {
+    // Só atualiza o indicador se todas as tabs estiverem medidas
+    const allMeasured = tabs.every(tab => tabWidths[tab.id] !== undefined && tabPositions[tab.id] !== undefined);
+    if (!allMeasured) return;
     if (tabPositions[activeTabId] !== undefined && tabWidths[activeTabId] !== undefined) {
-      // Anima o indicador para a posição da tab ativa
-      const currentPosition = tabPositions[activeTabId];
       const currentWidth = tabWidths[activeTabId];
-      
-      // Centraliza a tab ativa no scroll view primeiro
+      let currentPosition = tabPositions[activeTabId];
       if (scrollViewRef.current && scrollableTabs) {
         scrollViewRef.current.scrollTo({
           x: Math.max(0, currentPosition - windowWidth / 2 + currentWidth / 2),
           animated: true
         });
-        
-        // Pequeno atraso para garantir que o scroll foi concluído antes de animar o indicador
-        setTimeout(() => {
-          // Atualiza a posição e largura do indicador com animação
-          indicatorPosition.value = withSpring(currentPosition, {
-            damping: 20,
-            stiffness: 90,
-          });
-          indicatorWidth.value = withSpring(currentWidth, {
-            damping: 20,
-            stiffness: 90,
-          });
-        }, 50);
-      } else {
-        // Atualiza imediatamente se não houver scroll
-        indicatorPosition.value = withSpring(currentPosition, {
+      }
+      setTimeout(() => {
+        // Indicador começa exatamente onde a tab começa e tem a mesma largura
+        // Ajuste para ScrollView: subtrai scrollX para alinhar corretamente
+        indicatorPosition.value = withSpring(tabPositions[activeTabId] - (scrollableTabs ? scrollX : 0), {
           damping: 20,
           stiffness: 90,
         });
@@ -175,9 +183,7 @@ export default function UIPageMan({
           damping: 20,
           stiffness: 90,
         });
-      }
-      
-      // Atualiza a posição do conteúdo
+      }, 50);
       const tabIndex = tabs.findIndex(tab => tab.id === activeTabId);
       if (animateTransition) {
         contentTranslateX.value = withTiming(-tabIndex * windowWidth, {
@@ -186,13 +192,11 @@ export default function UIPageMan({
       } else {
         contentTranslateX.value = -tabIndex * windowWidth;
       }
-      
-      // Chama o callback se existir
       if (onTabChange) {
         onTabChange(activeTabId);
       }
     }
-  }, [activeTabId, tabPositions, tabWidths, indicatorPosition, indicatorWidth, contentTranslateX, windowWidth, tabs, scrollableTabs, animationDuration, onTabChange]);
+  }, [activeTabId, tabPositions, tabWidths, indicatorPosition, indicatorWidth, contentTranslateX, windowWidth, tabs, scrollableTabs, animationDuration, onTabChange, scrollX]);
   
   // Estilo animado para o indicador
   const indicatorAnimatedStyle = useAnimatedStyle(() => {
@@ -202,12 +206,13 @@ export default function UIPageMan({
       // Garantindo que o indicador fique visível e bem posicionado
       position: 'absolute',
       bottom: 0,
+      left: 0,
       height: 3,
       backgroundColor: theme.colors.primary,
       borderTopLeftRadius: 3,
       borderTopRightRadius: 3,
-      zIndex: 1,
-      ...(indicatorStyle as object || {})
+      zIndex: 999, // Aumentado para garantir que fique acima de todos os outros elementos
+      ...(typeof indicatorStyle === 'object' ? indicatorStyle : {})
     };
   });
   
@@ -245,23 +250,18 @@ export default function UIPageMan({
   
   // Função para medir a largura e posição de cada tab
   const measureTab = useCallback((tabId: string, width: number, x: number) => {
-    // Armazena a largura da tab
+    // Ajusta x somando scrollX quando ScrollView está ativo
+    const adjustedX = scrollableTabs ? x + scrollX : x;
+    setTabPositions(prev => ({ ...prev, [tabId]: adjustedX }));
     setTabWidths(prev => ({ ...prev, [tabId]: width }));
-    
-    // Armazena a posição da tab
-    setTabPositions(prev => ({ ...prev, [tabId]: x }));
-    
-    // Se for a tab ativa, atualiza imediatamente o indicador
-    if (tabId === activeTabId) {
-      indicatorPosition.value = x;
-      indicatorWidth.value = width;
-    }
-  }, [activeTabId, indicatorPosition, indicatorWidth]);
+  }, [scrollableTabs, scrollX]);
   
   // Memoize styles para melhorar a performance
   const styles = React.useMemo(() => StyleSheet.create({
     container: {
       width: '100%',
+      flex: 1,
+      height: '100%',
       ...(style as ViewStyle),
     },
     tabsContainer: {
@@ -322,9 +322,13 @@ export default function UIPageMan({
     contentContainer: {
       width: tabs.length * windowWidth,
       flexDirection: 'row',
+      flex: 1,
+      overflow: 'hidden'
     },
     pageContainer: {
       width: windowWidth,
+      flex: 1,
+      overflow: 'hidden'
     },
   }), [style, tabsContainerStyle, tabStyle, activeTabStyle, tabTextStyle, activeTabTextStyle, indicatorStyle, theme, tabs.length, windowWidth]);
   
@@ -333,62 +337,99 @@ export default function UIPageMan({
     return (
       <Pressable
         key={tab.id}
-        style={[
-          styles.tab,
-          isFixed && { flex: 1 },
-          activeTabId === tab.id && styles.activeTab,
-        ]}
+        style={[styles.tab, isFixed && { flex: 1 }, activeTabId === tab.id && styles.activeTab]}
         onPress={() => handleTabPress(tab.id)}
         disabled={tab.disabled}
-        onLayout={(e) => {
-          const { width, x } = e.nativeEvent.layout;
-          measureTab(tab.id, width, x);
+        ref={tabRefs[tab.id]}
+        onLayout={() => {
+          // Medir posição relativa ao container das tabs (View)
+          if (tabRefs[tab.id]?.current && tabsContainerRef.current) {
+            tabRefs[tab.id]?.current?.measureLayout(
+              tabsContainerRef.current,
+              (x, y, width, height) => {
+                measureTab(tab.id, width, x);
+              },
+              () => {}
+            );
+          }
         }}
-        android_ripple={{ color: theme.colors.primary + '20' }} // Cor primária com 20% de opacidade
+        android_ripple={{ color: theme.colors.primary + '20' }}
       >
         <WRText
-          style={[
-            styles.tabText,
-            activeTabId === tab.id && styles.activeTabText,
-            tab.disabled && styles.disabledTabText,
-          ]}
+          style={[styles.tabText, activeTabId === tab.id && styles.activeTabText, tab.disabled && styles.disabledTabText]}
         >
           {tab.title}
         </WRText>
       </Pressable>
     );
-  }, [activeTabId, handleTabPress, measureTab, styles, theme.colors.primary]);
+  }, [activeTabId, handleTabPress, measureTab, styles, theme.colors.primary, tabRefs, scrollViewRef]);
   
+  // Função para renderizar o indicador
+  const renderIndicator = () => {
+    if (!showIndicator) return null;
+    
+    return (
+      <Animated.View 
+        style={[
+          styles.indicator,
+          { 
+            position: 'absolute', 
+            bottom: 0,
+            left: 0,
+            height: 3,
+            backgroundColor: theme.colors.primary,
+            borderRadius: 3,
+            zIndex: 999
+          },
+          indicatorAnimatedStyle
+        ]} 
+      />
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.tabsContainer}>
+      <View style={styles.tabsContainer} ref={tabsContainerRef}>
         {scrollableTabs ? (
-          <ScrollView
-            ref={scrollViewRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabsScrollView}
-          >
-            {tabs.map((tab) => renderTab(tab))}
+          <View style={{ width: '100%', position: 'relative' }}>
+            <ScrollView
+              ref={scrollViewRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={[
+                styles.tabsScrollView,
+                centerTabs ? { flexGrow: 1, justifyContent: 'center' } : {}
+              ]}
+              onScroll={e => setScrollX(e.nativeEvent.contentOffset.x)}
+              scrollEventThrottle={16}
+            >
+              {tabs.map((tab) => renderTab(tab))}
+            </ScrollView>
             
-            {showIndicator && (
-              <Animated.View style={indicatorAnimatedStyle} />
-            )}
-          </ScrollView>
+            {renderIndicator()}
+          </View>
         ) : (
-          <View style={{ flexDirection: 'row', width: '100%' }}>
+          <View 
+            style={{ 
+              flexDirection: 'row', 
+              width: '100%',
+              position: 'relative',
+              ...(centerTabs ? { justifyContent: 'center' } : {})
+            }}
+          >
             {tabs.map((tab) => renderTab(tab, true))}
             
-            {showIndicator && (
-              <Animated.View style={indicatorAnimatedStyle} />
-            )}
+            {renderIndicator()}
           </View>
         )}
       </View>
       
-      <Animated.View style={[styles.contentContainer, contentAnimatedStyle]}>
+      <Animated.View style={[styles.contentContainer, contentAnimatedStyle]}> 
         {tabs.map((tab) => (
-          <View key={tab.id} style={styles.pageContainer}>
+          <View 
+            key={tab.id} 
+            style={styles.pageContainer}
+          >
             {tab.content}
           </View>
         ))}

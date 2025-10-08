@@ -14,7 +14,9 @@ import NewsHomeScreen from "@/components/component_screens/home_screen/news-home
 import SavingsInvestmentsScreen from "@/components/component_screens/home_screen/savings-investments-screen";
 import ScreenControllerHomeScreen from "@/components/component_screens/home_screen/screen-controller-home-screen";
 import UILoader from "@/components/UI/UILoader";
+import UIPageMan, { TabItem } from "@/components/UI/UIPageMan";
 import WRScreenContainer from "@/components/wrappers/WRScreenContainer";
+import WRText from "@/components/wrappers/WRText";
 import { ToastType } from "@/constants/constants.toast";
 import { useAuth } from "@/context/auth-context";
 import { useReferenceDate } from "@/context/reference-date-context";
@@ -28,13 +30,13 @@ import AuthResponse from "@/types/AuthResponse";
 import HomeScreenAnalysisData from "@/types/HomeScreenAnalysisData";
 import UserInfo from "@/types/UserInfo";
 import { useEffect, useState } from "react";
-import { Text } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
   const { isDark } = useAppTheme();
   const { authObject } = useAuth();
   const { showToast } = useToast();
-  const { setSelectedBanks, selectedBanks } = useTargetBanks();
+  const { setSelectedBanks } = useTargetBanks();
   const { referenceDate, getDateRangeByPeriod } = useReferenceDate();
 
   const [openTutorialModal, setOpenTutorialModal] = useState<boolean>(false);
@@ -91,7 +93,7 @@ export default function HomeScreen() {
     };
     
     return (
-      <>
+      <View style={{ gap: 16 }}>
         {renderComponent(FinancialResumeHomeScreen, {analysis: analysis?.financialSummary}, "FinancialResumeHomeScreen")}
         {renderComponent(CurrentBalanceProjectionScreen, {analysis: analysis?.currentBalanceProjection}, "CurrentBalanceProjectionScreen")}
         {renderComponent(ExpenseCategoriesScreen, {analysis: analysis?.expenseCategories}, "ExpenseCategoriesScreen")}
@@ -99,17 +101,86 @@ export default function HomeScreen() {
         {renderComponent(IncomeBreakdownScreen, {analysis: analysis?.incomeBreakdown}, "IncomeBreakdownScreen")}
         {renderComponent(SavingsInvestmentsScreen, {analysis: analysis?.savingsInvestments}, "SavingsInvestmentsScreen")}
         {renderComponent(NewsHomeScreen, {}, "NewsHomeScreen")}
-      </>
+      </View>
     )
   }
 
-  return(
-    <WRScreenContainer>
-      <GreetingsHomeScreen />
-      <ScreenControllerHomeScreen />
-      
-      {isLoading ? ( <UILoader message="Carregando dados..."/> ) : (<HomeContent/>) } 
-    </WRScreenContainer>
-  )
+  function AnalysisPage() {
+    return (
+      <View style={[style.tabContent, { flex: 1, height: '100%' }]}>
+        {isLoading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <UILoader message="Carregando dados..."/>
+          </View>
+        ) : (
+          <ScrollView 
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            bounces={true}
+          >
+            <HomeContent/>
+          </ScrollView>
+        )}
+      </View>
+    )
+  }
 
+  function ForYouPage () {
+    return (
+      <View style={[style.tabContent, { flex: 1 }]}>
+        <ScrollView 
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={true}
+          nestedScrollEnabled={true}
+          bounces={true}
+        >
+          <WRText>For you 💜</WRText>
+          {/* Aqui você pode adicionar mais conteúdo que precisará de scroll */}
+        </ScrollView>
+      </View>
+    )
+  }
+
+  const tabs: TabItem[] = [
+    {
+      id: 'foryou',
+      title: 'For you 💜',
+      content: <ForYouPage />
+    },
+    {
+      id: 'analysis',
+      title: 'Analysis 🔎',
+      content: <AnalysisPage />
+    },
+  ]
+
+  return(
+    <>
+      <WRScreenContainer asView={true} style={{ flex: 1 }}>
+        <GreetingsHomeScreen />
+        <ScreenControllerHomeScreen />
+     
+        <UIPageMan 
+          tabs={tabs}
+          initialTabId="foryou"
+          onTabChange={(tabId) => console.log(`Tab changed to: ${tabId}`)}
+          centerTabs
+          style={{ flex: 1 }}
+        />
+    
+      </WRScreenContainer>
+    </>
+
+  )
 }
+
+const style = StyleSheet.create({
+  tabContent: {
+     gap: 16,
+     marginRight: 18,
+     flex: 1
+  }
+})
