@@ -13,8 +13,10 @@ import IncomeBreakdownScreen from "@/components/component_screens/home_screen/in
 import NewsHomeScreen from "@/components/component_screens/home_screen/news-home-screen";
 import SavingsInvestmentsScreen from "@/components/component_screens/home_screen/savings-investments-screen";
 import ScreenControllerHomeScreen from "@/components/component_screens/home_screen/screen-controller-home-screen";
+import UIInsightCard from "@/components/UI/UIInsightCard";
 import UILoader from "@/components/UI/UILoader";
 import UIPageMan, { TabItem } from "@/components/UI/UIPageMan";
+import UIScoreCard from "@/components/UI/UIScoreCard";
 import WRScreenContainer from "@/components/wrappers/WRScreenContainer";
 import WRText from "@/components/wrappers/WRText";
 import { ToastType } from "@/constants/constants.toast";
@@ -24,9 +26,10 @@ import { useTargetBanks } from "@/context/target-bank-context";
 import { useAppTheme } from "@/context/theme-context";
 import { useToast } from "@/context/toast-context";
 import { processTutorialPriorities } from "@/priorities/priorities.tutorial";
-import { getHomeScreenAnalysisFromReferenceDate } from "@/service/service.analysis-screen";
+import { getFinancialScoreAnalysisFromReferenceDate, getHomeScreenAnalysisFromReferenceDate } from "@/service/service.analysis";
 import { getUserInfo } from "@/service/service.user";
 import AuthResponse from "@/types/AuthResponse";
+import FinancialScore from "@/types/FinancialScore";
 import HomeScreenAnalysisData from "@/types/HomeScreenAnalysisData";
 import UserInfo from "@/types/UserInfo";
 import { useEffect, useState } from "react";
@@ -41,6 +44,7 @@ export default function HomeScreen() {
 
   const [openTutorialModal, setOpenTutorialModal] = useState<boolean>(false);
   const [analysis, setAnalysis] = useState<null | HomeScreenAnalysisData>(null);
+  const [financialScore, setFinancialScore] = useState<null | FinancialScore>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -61,6 +65,15 @@ export default function HomeScreen() {
   
         const dateRange = getDateRangeByPeriod('monthly');
         setAnalysis(await getHomeScreenAnalysisFromReferenceDate(
+          userInfo.connectedBanks,
+          referenceDate,
+          authObject as AuthResponse,     
+          true, 
+          dateRange?.startDate,
+          dateRange?.endDate
+        ));
+
+        setFinancialScore(await getFinancialScoreAnalysisFromReferenceDate(
           userInfo.connectedBanks,
           referenceDate,
           authObject as AuthResponse,     
@@ -130,16 +143,40 @@ export default function HomeScreen() {
   function ForYouPage () {
     return (
       <View style={[style.tabContent, { flex: 1 }]}>
-        <ScrollView 
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={true}
-          nestedScrollEnabled={true}
-          bounces={true}
-        >
-          <WRText>For you 💜</WRText>
-          {/* Aqui você pode adicionar mais conteúdo que precisará de scroll */}
-        </ScrollView>
+        {isLoading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <UILoader message="Carregando dados..."/>
+          </View>
+        ) : (
+          <ScrollView 
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 16 }}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            bounces={true}
+          >
+            <GreetingsHomeScreen />
+
+            <UIScoreCard 
+              financialScore={financialScore}
+              maxScore={100.0}
+              title={"Seu Score Financeiro"}
+              stats={{
+                days: 23,
+                improvement: 12
+              }}
+            />
+            
+            {financialScore?.insights && financialScore.insights.length > 0 && (
+              <>
+                <WRText style={{ fontSize: 18, fontWeight: 'bold', marginTop: 24, marginBottom: 8 }}>Insights Para Você</WRText>
+                {financialScore.insights.map((insight, index) => (
+                  <UIInsightCard key={`insight-${index}`} insight={insight} />
+                ))}
+              </>
+            )}
+          </ScrollView>
+        )}
       </View>
     )
   }
@@ -160,7 +197,6 @@ export default function HomeScreen() {
   return(
     <>
       <WRScreenContainer asView={true} style={{ flex: 1 }}>
-        <GreetingsHomeScreen />
         <ScreenControllerHomeScreen />
      
         <UIPageMan 

@@ -31,6 +31,10 @@ export interface AppTheme {
     notification: string;
     dividerColor: string;
     error: string;
+    success: string;
+    warning: string;
+    info: string;
+    danger: string;
   },
   fonts: {
     regular: FontStyle;
@@ -57,7 +61,11 @@ export const lightTheme: AppTheme = {
         border: '#c7c7c7',
         notification: '#ff80ab',
         dividerColor: "#BFBFBF",
-        error: '#FF0000'
+        error: '#FF0000',
+        success: '#00FF00',
+        warning: '#FFFF00',
+        info: '#0000FF',
+        danger: '#FF0000',
       },
     fonts: {
         regular: { fontFamily: 'SF-PRO-DISPLAY-REGULAR', fontWeight: '400' },
@@ -109,7 +117,11 @@ export const darkTheme: AppTheme = {
     border: '#3A3A3A',
     notification: '#FF80AB',
     dividerColor: "#3D3D3D",
-    error: '#FF6B6B'
+    error: '#FF6B6B',
+    success: '#00FF00',
+    warning: '#FFFF00',
+    info: '#0000FF',
+    danger: '#FF0000',
   },
   fonts: {
     regular: { fontFamily: 'SF-PRO-DISPLAY-REGULAR', fontWeight: '400' },

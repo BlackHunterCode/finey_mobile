@@ -21,7 +21,7 @@ export class CryptUtil {
     return CryptoJS.enc.Base64.stringify(encrypted.ciphertext);
   }
 
-  static decrypt(encryptedData: string, secretKey: string): string {
+  static decrypt(encryptedData: string, secretKey: string | undefined): string {
     if (!secretKey) throw new Error('Secret key is required for decryption');
 
     const key = CryptoJS.enc.Utf8.parse(secretKey.substring(0, 16));
