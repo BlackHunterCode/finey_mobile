@@ -4,14 +4,14 @@
  * Layout de navegação por tabs para a área autenticada.
  */
 
-import WRScreenContainer from '@/components/wrappers/WRScreenContainer';
-import WRText from '@/components/wrappers/WRText';
+import UIButton from '@/components/UI/UIButton';
 import UIDropInfo from '@/components/UI/UIDropInfo';
 import UIToggle from '@/components/UI/UIToggle';
-import UIButton from '@/components/UI/UIButton';
+import WRScreenContainer from '@/components/wrappers/WRScreenContainer';
+import WRText from '@/components/wrappers/WRText';
 import { useAppTheme } from '@/context/theme-context';
 import { useState } from 'react';
-import { View, StyleSheet, Text, Button } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function PreferencesConfigurationScreen(){
     const { theme, isDark } = useAppTheme();
@@ -35,13 +35,24 @@ export default function PreferencesConfigurationScreen(){
         alignItems: 'flex-start',
         flexDirection: 'column',
         gap: 10,
+      },
+      description: { 
+        color: isDark ? '#FFFFFF' : '#000000', 
+        fontSize: 15,
+      },
+      subDescription: {
+        color: isDark ? '#888888ff' : '#888888ff', 
+        fontSize: 12,
+      },
+      space_gap: {
+        marginBottom: 25
       }
     });
 
     return (
         <WRScreenContainer>
             <View>
-                <WRText style={[styles.textCenter, { fontSize: 20, fontWeight: 'bold', marginBottom: 20 }]}>Preferencia do App</WRText>
+                <WRText style={[styles.textCenter, { fontSize: 20, fontWeight: 'bold', marginBottom: 10 }]}>Preferencia do App</WRText>
             </View>
             <View style={{ flexDirection: 'column' }}>
                 <UIDropInfo title="Aparência do Aplicativo" defaultOpen>
@@ -51,19 +62,19 @@ export default function PreferencesConfigurationScreen(){
                     value={appTheme}
                     onValueChange={setAppTheme}
                     />
-                    <View style={{alignItems: 'center', justifyContent: 'space-between'}}>
+                    <View style={{alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', width: '100%', marginBottom: 15}}>
                         <View>
-                            <Text style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 }}>Tamanho de Texto</Text>
-                            <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Defina a variavel do tamanho do texto.</Text>
+                            <Text style={styles.description}>Tamanho do Texto</Text>
+                            <Text style={styles.subDescription}>Defina a variavel do tamanho do texto.</Text>
                         </View>
-                        <Button title="Editar" onPress={() => {}} />
+                        <UIButton text="Editar" size='small' style={{backgroundColor: '#383838ff', borderRadius: 3}} textColor='#a7a7a7ff' onPress={() => {}} />
                     </View>
-                    <View style={{alignItems: 'center', justifyContent: 'space-between'}}>
+                    <View style={{alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', width: '100%', marginBottom: 15}}>
                         <View>
-                            <Text style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 }}>Cor Primária</Text>
-                            <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Defina a variavel da cor primaria</Text>
+                            <Text style={styles.description}>Cor Primária</Text>
+                            <Text style={styles.subDescription}>Defina a variavel da cor primária.</Text>
                         </View>
-                        <Button title="Editar" onPress={() => {}} />
+                        <UIButton text="Editar" size='small' style={{backgroundColor: '#383838ff', borderRadius: 3}} textColor='#a7a7a7ff' onPress={() => {}} />
                     </View>
                 </UIDropInfo>
                 <UIDropInfo title="Funcionalidades" defaultOpen>
@@ -79,12 +90,12 @@ export default function PreferencesConfigurationScreen(){
                     value={appTheme}
                     onValueChange={setAppTheme}
                     />
-                    <View style={{alignItems: 'center', justifyContent: 'space-between'}}>
+                    <View style={{alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', width: '100%', marginBottom: 15}}>
                         <View>
-                            <Text style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 }}>Configurar Atalho</Text>
-                            <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Configure os atalhos das telas principais.</Text>
+                            <Text style={styles.description}>Configurar Atalho</Text>
+                            <Text style={styles.subDescription}>Configure os atalhos das telas principais.</Text>
                         </View>
-                        <Button title="Editar" onPress={() => {}} />
+                        <UIButton text="Editar" size='small' style={{backgroundColor: '#383838ff', borderRadius: 3}} textColor='#a7a7a7ff' onPress={() => {}} />
                     </View>
                 </UIDropInfo>
                 <UIDropInfo title="Privacidades" defaultOpen>
@@ -94,12 +105,12 @@ export default function PreferencesConfigurationScreen(){
                     value={appTheme}
                     onValueChange={setAppTheme}
                     />
-                    <View style={{alignItems: 'center', justifyContent: 'space-between'}}>
+                    <View style={{alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', width: '100%', marginBottom: 15}}>
                         <View>
-                            <Text style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 }}>Personalização de Anúncios</Text>
-                            <Text style={{ color: isDark ? '#888888ff' : '#888888ff', fontSize: 8 }}>Personalize a forma que os anúncios aparecem.</Text>
+                            <Text style={styles.description}>Personalização de Anúncios</Text>
+                            <Text style={styles.subDescription}>personalize a forma que os anúncios aparecem.</Text>
                         </View>
-                        <Button title="Editar" onPress={() => {}} />
+                        <UIButton text="Editar" size='small' style={{backgroundColor: '#383838ff', borderRadius: 3}} textColor='#a7a7a7ff' onPress={() => {}} />
                     </View>
                 </UIDropInfo>
                 <UIDropInfo title="Acessibilidade" defaultOpen>
@@ -122,7 +133,7 @@ export default function PreferencesConfigurationScreen(){
                     onValueChange={setAppTheme}
                     />
                 </UIDropInfo>
-                <View>
+                <View style={[{ flexDirection: 'row', justifyContent: 'space-around'}]}>
                     <UIButton
                     text='Salvar Alterações'
                     onPress={() => {}}
@@ -132,7 +143,7 @@ export default function PreferencesConfigurationScreen(){
                     onPress={() => {}}
                     />
                 </View>
-                </View>
+            </View>
         </WRScreenContainer>
     )
 }

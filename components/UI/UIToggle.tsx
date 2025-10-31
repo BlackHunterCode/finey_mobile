@@ -32,7 +32,7 @@ export default function UIToggle({
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 12,
+      marginBottom: 15,
       ...(style as object),
     },
     textContainer: {
@@ -45,8 +45,8 @@ export default function UIToggle({
       fontSize: 15,
     },
     description: {
-      color: theme.colors.notification ?? theme.colors.border,
-      fontSize: 13,
+      color: 'gray',
+      fontSize: 12,
       marginTop: 2,
     },
   });
