@@ -120,7 +120,8 @@ export default function PlansSelectionScreen() {
     <WRScreenContainer>
       <View style={{ alignItems: "center" }}>
         <Image
-          style={{ width: 60, height: 60, marginBottom: 10 }}
+          source={require("@/assets/images/hunter_sentado.png")} 
+          style={{ width: 60, height: 60, marginBottom: 20 }}
         />
         <WRText style={styles.headerText}>
           Pronto para ter um futuro financeiro melhor
