@@ -62,7 +62,7 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
             flex: 1,
             height: screenHeight - keyboardHeight,
             paddingHorizontal: 10,
-            paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+            paddingTop: Platform.OS === 'android' && !asView ? StatusBar.currentHeight : 0,
             backgroundColor: theme.colors.background
         },
         contentContainer: {
@@ -142,7 +142,7 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
 
     if(useSafeAreaView) {
       return (
-        <SafeAreaView style={{flex: 1}}>
+        <SafeAreaView style={{flex: 1, backgroundColor: theme.colors.background}}>
           {allContentCenter ? ViewComponent() : (asView ? SimpleViewComponent() : ScrollViewComponent())}
         </SafeAreaView>
       )
@@ -152,5 +152,5 @@ const WRScreenContainer = forwardRef<React.ComponentRef<typeof ScrollView>, WRSc
     }
   } 
 );
-  
+WRScreenContainer.displayName = 'WRScreenContainer';
 export default WRScreenContainer;

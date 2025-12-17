@@ -52,7 +52,7 @@ export interface AppTheme {
 
 export const lightTheme: AppTheme = {
     colors: {
-        primary: '#6823D1',
+        primary: '#00c15aff',
         primaryGradient: ['#6823D1', '#46198B'],
         background: '#F1F0F5',
         card: '#ffffff',
@@ -108,8 +108,8 @@ export const lightTheme: AppTheme = {
 
 export const darkTheme: AppTheme = {
   colors: {
-    primary: '#A58BFF', // tom mais claro para melhor visibilidade no escuro
-    primaryGradient: ['#A58BFF', '#6A4ACF'],
+    primary: '#00ff77ff', // tom mais claro para melhor visibilidade no escuro
+    primaryGradient: ['#00ff77ff', '#00cc60ff'],
     background: '#121212',
     card: '#1E1E1E',
     text: '#FFFFFF',

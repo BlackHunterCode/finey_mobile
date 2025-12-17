@@ -327,7 +327,7 @@ export default function LearnScreen() {
               </View>
             </View>
           </View>
-          <WRText style={styles.feedbackText}>"{feedbacks[currentFeedbackIndex].text}"</WRText>
+          <WRText style={styles.feedbackText}>{feedbacks[currentFeedbackIndex].text}</WRText>
           <View style={styles.feedbackNavigation}>
             <TouchableOpacity onPress={prevFeedback} style={styles.navButton}>
               <UIIcon name="chevron-back-outline" size={24} color={theme.colors.primary} />

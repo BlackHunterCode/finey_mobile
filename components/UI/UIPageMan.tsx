@@ -1,7 +1,8 @@
 import { useAppTheme } from '@/context/theme-context';
 import { Props } from '@/types/JSXTypes';
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import React, { ReactNode, forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Dimensions, Pressable, ScrollView, StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import WRText from '../wrappers/WRText';
 
@@ -26,6 +27,13 @@ export interface TabItem {
    * @default false
    */
   disabled?: boolean;
+}
+
+export interface UIPageManController {
+  next: () => void;
+  prev: () => void;
+  select: (id: string) => void;
+  getActiveId: () => string;
 }
 
 interface UIPageManProps extends Omit<Props, 'children'> {
@@ -108,6 +116,17 @@ interface UIPageManProps extends Omit<Props, 'children'> {
    * @default 300
    */
   animationDuration?: number;
+
+  /**
+   * Exibe setas de navegação laterais para avançar e voltar páginas
+   * @default false
+   */
+  showNavigationArrows?: boolean;
+  /**
+   * Oculta completamente o cabeçalho de tabs (títulos e indicador)
+   * @default false
+   */
+  hideTabsHeader?: boolean;
 }
 
 /**
@@ -116,7 +135,7 @@ interface UIPageManProps extends Omit<Props, 'children'> {
  * @returns React.JSX.Element
  * @author Victor Barberino
  */
-export default function UIPageMan({
+const UIPageMan = forwardRef<UIPageManController, UIPageManProps>(function UIPageMan({
   tabs,
   initialTabId,
   onTabChange,
@@ -132,8 +151,10 @@ export default function UIPageMan({
   centerTabs = false,
   animateTransition = true,
   animationDuration = 300,
-  children
-}: UIPageManProps) {
+  children,
+  showNavigationArrows = false,
+  hideTabsHeader = false
+}: UIPageManProps, ref) {
   const { theme } = useAppTheme();
   const [activeTabId, setActiveTabId] = useState<string>(initialTabId || (tabs.length > 0 ? tabs[0].id : ''));
   const [tabWidths, setTabWidths] = useState<{ [key: string]: number }>({});
@@ -158,9 +179,8 @@ export default function UIPageMan({
   const indicatorWidth = useSharedValue(0);
   const contentTranslateX = useSharedValue(0);
   
-  // Atualiza a posição do indicador quando a tab ativa ou o scrollX mudam
+  // Atualiza o indicador (se habilitado) quando medidas estiverem disponíveis
   useEffect(() => {
-    // Só atualiza o indicador se todas as tabs estiverem medidas
     const allMeasured = tabs.every(tab => tabWidths[tab.id] !== undefined && tabPositions[tab.id] !== undefined);
     if (!allMeasured) return;
     if (tabPositions[activeTabId] !== undefined && tabWidths[activeTabId] !== undefined) {
@@ -173,8 +193,6 @@ export default function UIPageMan({
         });
       }
       setTimeout(() => {
-        // Indicador começa exatamente onde a tab começa e tem a mesma largura
-        // Ajuste para ScrollView: subtrai scrollX para alinhar corretamente
         indicatorPosition.value = withSpring(tabPositions[activeTabId] - (scrollableTabs ? scrollX : 0), {
           damping: 20,
           stiffness: 90,
@@ -184,19 +202,46 @@ export default function UIPageMan({
           stiffness: 90,
         });
       }, 50);
-      const tabIndex = tabs.findIndex(tab => tab.id === activeTabId);
-      if (animateTransition) {
-        contentTranslateX.value = withTiming(-tabIndex * windowWidth, {
-          duration: animationDuration,
-        });
-      } else {
-        contentTranslateX.value = -tabIndex * windowWidth;
-      }
-      if (onTabChange) {
-        onTabChange(activeTabId);
-      }
     }
-  }, [activeTabId, tabPositions, tabWidths, indicatorPosition, indicatorWidth, contentTranslateX, windowWidth, tabs, scrollableTabs, animationDuration, onTabChange, scrollX]);
+  }, [activeTabId, tabPositions, tabWidths, indicatorPosition, indicatorWidth, windowWidth, tabs, scrollableTabs, scrollX]);
+
+  // Atualiza a transição de conteúdo e dispara onTabChange independentemente de medições
+  useEffect(() => {
+    const tabIndex = tabs.findIndex(tab => tab.id === activeTabId);
+    if (animateTransition) {
+      contentTranslateX.value = withTiming(-tabIndex * windowWidth, {
+        duration: animationDuration,
+      });
+    } else {
+      contentTranslateX.value = -tabIndex * windowWidth;
+    }
+    if (onTabChange) {
+      onTabChange(activeTabId);
+    }
+  }, [activeTabId, tabs, windowWidth, animateTransition, animationDuration, onTabChange]);
+
+  const goToTabIndex = useCallback((index: number) => {
+    if (index < 0 || index >= tabs.length) return;
+    const id = tabs[index].id;
+    setActiveTabId(id);
+  }, [tabs]);
+
+  const nextTab = useCallback(() => {
+    const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+    goToTabIndex(currentIndex + 1);
+  }, [activeTabId, tabs, goToTabIndex]);
+
+  const prevTab = useCallback(() => {
+    const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+    goToTabIndex(currentIndex - 1);
+  }, [activeTabId, tabs, goToTabIndex]);
+
+  useImperativeHandle(ref, () => ({
+    next: nextTab,
+    prev: prevTab,
+    select: (id: string) => setActiveTabId(id),
+    getActiveId: () => activeTabId,
+  }), [nextTab, prevTab, activeTabId]);
   
   // Estilo animado para o indicador
   const indicatorAnimatedStyle = useAnimatedStyle(() => {
@@ -263,6 +308,21 @@ export default function UIPageMan({
       flex: 1,
       height: '100%',
       ...(style as ViewStyle),
+    },
+    arrow: {
+      position: 'absolute',
+      top: '45%',
+      zIndex: 1000,
+      backgroundColor: theme.colors.card,
+      borderRadius: 18,
+      padding: 6,
+      opacity: 0.8,
+    },
+    arrowLeft: {
+      left: 8,
+    },
+    arrowRight: {
+      right: 8,
     },
     tabsContainer: {
       flexDirection: 'row',
@@ -387,8 +447,13 @@ export default function UIPageMan({
     );
   };
 
+  const currentIndex = tabs.findIndex(t => t.id === activeTabId);
+  const isFirst = currentIndex <= 0;
+  const isLast = currentIndex >= tabs.length - 1;
+
   return (
     <View style={styles.container}>
+      {!hideTabsHeader && (
       <View style={styles.tabsContainer} ref={tabsContainerRef}>
         {scrollableTabs ? (
           <View style={{ width: '100%', position: 'relative' }}>
@@ -423,6 +488,7 @@ export default function UIPageMan({
           </View>
         )}
       </View>
+      )}
       
       <Animated.View style={[styles.contentContainer, contentAnimatedStyle]}> 
         {tabs.map((tab) => (
@@ -434,6 +500,29 @@ export default function UIPageMan({
           </View>
         ))}
       </Animated.View>
+
+      {showNavigationArrows && (
+        <>
+          <TouchableOpacity
+            style={[styles.arrow, styles.arrowLeft, isFirst && { opacity: 0.4 }]}
+            onPress={prevTab}
+            disabled={isFirst}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="chevron-back" size={20} color={theme.colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.arrow, styles.arrowRight, isLast && { opacity: 0.4 }]}
+            onPress={nextTab}
+            disabled={isLast}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.text} />
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
-}
+});
+
+export default UIPageMan;

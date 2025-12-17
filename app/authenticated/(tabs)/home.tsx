@@ -4,15 +4,15 @@
  * Tela Home.
  */
 
-import BudgetRealityScreen from "@/components/component_screens/home_screen/budget-reality-screen";
-import CurrentBalanceProjectionScreen from "@/components/component_screens/home_screen/current-balance-projection-screen";
-import ExpenseCategoriesScreen from "@/components/component_screens/home_screen/expense-categories-screen";
-import FinancialResumeHomeScreen from "@/components/component_screens/home_screen/financial-resume-home-screen";
-import GreetingsHomeScreen from "@/components/component_screens/home_screen/greetings-home-screen";
-import IncomeBreakdownScreen from "@/components/component_screens/home_screen/income-breakdown-screen";
-import NewsHomeScreen from "@/components/component_screens/home_screen/news-home-screen";
-import SavingsInvestmentsScreen from "@/components/component_screens/home_screen/savings-investments-screen";
-import ScreenControllerHomeScreen from "@/components/component_screens/home_screen/screen-controller-home-screen";
+import BudgetRealityScreen from "@/components/component_screens/home_screen/analysis/budget-reality-screen";
+import CurrentBalanceProjectionScreen from "@/components/component_screens/home_screen/analysis/current-balance-projection-screen";
+import ExpenseCategoriesScreen from "@/components/component_screens/home_screen/analysis/expense-categories-screen";
+import FinancialResumeHomeScreen from "@/components/component_screens/home_screen/analysis/financial-resume-home-screen";
+import GreetingsHomeScreen from "@/components/component_screens/home_screen/analysis/greetings-home-screen";
+import IncomeBreakdownScreen from "@/components/component_screens/home_screen/analysis/income-breakdown-screen";
+import NewsHomeScreen from "@/components/component_screens/home_screen/analysis/news-home-screen";
+import SavingsInvestmentsScreen from "@/components/component_screens/home_screen/analysis/savings-investments-screen";
+import ScreenControllerHomeScreen from "@/components/component_screens/home_screen/analysis/screen-controller-home-screen";
 import UIInsightCard from "@/components/UI/UIInsightCard";
 import UILoader from "@/components/UI/UILoader";
 import UIPageMan, { TabItem } from "@/components/UI/UIPageMan";
@@ -26,17 +26,18 @@ import { useTargetBanks } from "@/context/target-bank-context";
 import { useAppTheme } from "@/context/theme-context";
 import { useToast } from "@/context/toast-context";
 import { processTutorialPriorities } from "@/priorities/priorities.tutorial";
-import { getFinancialScoreAnalysisFromReferenceDate, getHomeScreenAnalysisFromReferenceDate } from "@/service/service.analysis";
+import { getFinancialScoreAnalysisFromReferenceDate } from "@/service/service.analysis";
 import { getUserInfo } from "@/service/service.user";
+import { AppTheme } from "@/theme/theme";
 import AuthResponse from "@/types/AuthResponse";
 import FinancialScore from "@/types/FinancialScore";
 import HomeScreenAnalysisData from "@/types/HomeScreenAnalysisData";
 import UserInfo from "@/types/UserInfo";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
-  const { isDark } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const { authObject } = useAuth();
   const { showToast } = useToast();
   const { setSelectedBanks } = useTargetBanks();
@@ -64,14 +65,14 @@ export default function HomeScreen() {
         setSelectedBanks(userInfo.connectedBanks);
   
         const dateRange = getDateRangeByPeriod('monthly');
-        setAnalysis(await getHomeScreenAnalysisFromReferenceDate(
+        /*setAnalysis(await getHomeScreenAnalysisFromReferenceDate(
           userInfo.connectedBanks,
           referenceDate,
           authObject as AuthResponse,     
           true, 
           dateRange?.startDate,
           dateRange?.endDate
-        ));
+        ));*/
 
         setFinancialScore(await getFinancialScoreAnalysisFromReferenceDate(
           userInfo.connectedBanks,
@@ -118,7 +119,7 @@ export default function HomeScreen() {
     )
   }
 
-  function AnalysisPage() {
+  function AnalysisPage({ theme }: { theme: AppTheme }) {
     return (
       <View style={[style.tabContent, { flex: 1, height: '100%' }]}>
         {isLoading ? (
@@ -133,7 +134,8 @@ export default function HomeScreen() {
             nestedScrollEnabled={true}
             bounces={true}
           >
-            <HomeContent/>
+            <WRText style={{ textAlign: 'center', fontWeight: 'bold', marginVertical: 16 }}>Decidindo que será aqui...</WRText>
+            <ActivityIndicator color={theme.colors.primary} />
           </ScrollView>
         )}
       </View>
@@ -190,7 +192,7 @@ export default function HomeScreen() {
     {
       id: 'analysis',
       title: 'Analysis 🔎',
-      content: <AnalysisPage />
+      content: <AnalysisPage theme={theme} />
     },
   ]
 

@@ -3,6 +3,7 @@ import FinancialScore from '@/types/FinancialScore';
 import React from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import WRText from '../wrappers/WRText';
+import UICard from './UICard';
 
 /**
  * Propriedades do componente UIScoreCard
@@ -202,21 +203,19 @@ export default function UIScoreCard({
   });
 
   return (
-    <View style={[styles.container, style]}>
+    <UICard activeAccordion accordionBeOpenDefault accordionTitle={title}>
       <View style={styles.header}>
-        <WRText style={styles.title}>{title}</WRText>
+        {period ? (
+          <View style={styles.periodContainer}>
+            <WRText style={styles.periodText}>
+              📅 {formatPeriod(period)}
+            </WRText>
+          </View>
+        ) : (<></>)}
         <View style={styles.starIcon}>
           <WRText>⭐</WRText>
         </View>
       </View>
-
-      {period ? (
-        <View style={styles.periodContainer}>
-          <WRText style={styles.periodText}>
-            📅 {formatPeriod(period)}
-          </WRText>
-        </View>
-      ) : (<></>)}
 
       <View style={styles.scoreContainer}>
         <View style={styles.scoreValueContainer}>
@@ -228,11 +227,11 @@ export default function UIScoreCard({
       </View>
 
       {details ? (
-        <View style={styles.detailsContainer}>
+        <UICard activeAccordion accordionTitle='Detalhes' style={styles.detailsContainer}>
           <WRText numberOfLines={0} style={styles.detailsText}>
             {details}
           </WRText>
-        </View>
+        </UICard>
       ) : (<></>)}
 
       {financialScore?.daysOfControl !== undefined ? (
@@ -252,7 +251,7 @@ export default function UIScoreCard({
           )}
         </View>
       ) : (<></>)}
-    </View>
+    </UICard>
   );
 }
 

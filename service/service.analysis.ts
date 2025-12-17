@@ -21,7 +21,7 @@ export async function getHomeScreenAnalysisFromReferenceDate(
     startDate?: Date,
     endDate?: Date
 ): Promise<HomeScreenAnalysisData | null> {
-     const headers = getRequestHeader(authObject);
+    const headers = getRequestHeader(authObject);
     const bankAccountIds = extractBankAccountIds(transactions, considerCreditCard);
  
     // Criando a URL base
