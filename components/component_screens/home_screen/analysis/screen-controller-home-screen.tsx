@@ -10,7 +10,6 @@ import { useTargetBanks } from "@/context/target-bank-context";
 import { useAppTheme } from "@/context/theme-context";
 import { useToast } from "@/context/toast-context";
 import { useTotalTransactionPeriod } from "@/context/transaction/total-transaction-period-context";
-import { loadTotalTransactionPeriod } from "@/service/service.transaction";
 import { getUserInfo } from "@/service/service.user";
 import UserInfo from "@/types/UserInfo";
 import { CryptUtil } from "@/utils/CryptoUtil";
@@ -169,18 +168,18 @@ export default function ScreenControllerHomeScreen() {
         }
 
         try {
-            const result = await loadTotalTransactionPeriod(
-                userInfo.connectedBanks,
-                refDate,
-                authObject,
-                true, // considera os cartões de crédito
-                startDate,
-                endDate
-            );
+            // const result = await loadTotalTransactionPeriod(
+            //     userInfo.connectedBanks,
+            //     refDate,
+            //     authObject,
+            //     true, // considera os cartões de crédito
+            //     startDate,
+            //     endDate
+            // );
             
-            if (result) {
-                setTotalTransactionPeriod(result);
-            }
+            // if (result) {
+            //     setTotalTransactionPeriod(result);
+            // }
         } catch(err: any) {
             showToast({
                 message: "Erro ao carregar dados das transações.",

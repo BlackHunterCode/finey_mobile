@@ -208,6 +208,7 @@ export default function LoginScreen() {
                   isLoading={isLoading}
                   error={hasError}
                   style={styles.loginButton}
+                  textColor={isDark ? theme.colors.background : theme.colors.text}
                   size="large"
                 />
               </View>

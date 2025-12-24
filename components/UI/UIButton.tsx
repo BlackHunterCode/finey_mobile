@@ -24,6 +24,7 @@ interface ButtonProps {
     textStyle?: StyleProp<TextStyle>;
     disabled?: boolean;
     size?: 'small' | 'medium' | 'large';
+    onlyFontSizeChange?: boolean;
     isLoading?: boolean;
     error?: boolean;
 }
@@ -40,6 +41,7 @@ export default function UIButton({
     textStyle,
     disabled = false,
     size = 'medium',
+    onlyFontSizeChange = false,
     isLoading = false,
     error = false
 }: ButtonProps) {
@@ -54,6 +56,8 @@ export default function UIButton({
     const [backgroundColor, setBackgroundColor] = useState(
         hasBackground ? theme.colors.primary : 'transparent'
     );
+
+    const[onlyFontSizeChangeState, setOnlyFontSizeChangeState] = useState(onlyFontSizeChange);
 
     useEffect(() => {
         if (error) {
@@ -112,8 +116,20 @@ export default function UIButton({
     }, [error]);
 
     const getSizeStyles = () => {
+        let paddingSizeDefault = {
+            paddingVertical: 10,
+            paddingHorizontal: 18,
+        }
         switch (size) {
             case 'small':
+                if(onlyFontSizeChangeState) {
+                    return {
+                        fontSize: 12,
+                        iconSize: 14,
+                        paddingVertical: paddingSizeDefault.paddingVertical,
+                        paddingHorizontal: paddingSizeDefault.paddingHorizontal,
+                    }
+                } 
                 return {
                     paddingVertical: 6,
                     paddingHorizontal: 12,
@@ -121,6 +137,14 @@ export default function UIButton({
                     iconSize: 14
                 };
             case 'large':
+                if(onlyFontSizeChangeState) {
+                    return {
+                        fontSize: 18,
+                        iconSize: 22,
+                        paddingVertical: paddingSizeDefault.paddingVertical,
+                        paddingHorizontal: paddingSizeDefault.paddingHorizontal,
+                    }
+                }
                 return {
                     paddingVertical: 14,
                     paddingHorizontal: 24,
@@ -128,6 +152,14 @@ export default function UIButton({
                     iconSize: 22
                 };
             default: // medium
+                if(onlyFontSizeChangeState) {
+                    return {
+                        fontSize: 18,
+                        iconSize: 22,
+                        paddingVertical: paddingSizeDefault.paddingVertical,
+                        paddingHorizontal: paddingSizeDefault.paddingHorizontal,
+                    }
+                }
                 return {
                     paddingVertical: 10,
                     paddingHorizontal: 18,
@@ -147,11 +179,11 @@ export default function UIButton({
         paddingVertical: sizeStyles.paddingVertical,
         paddingHorizontal: sizeStyles.paddingHorizontal,
         opacity: disabled ? 0.6 : 1,
-        backgroundColor: backgroundColor,
+        backgroundColor: hasBackground ? theme.colors.primary : 'transparent',
     };
     
     const buttonTextStyles: TextStyle = {
-        color: textColor || (hasBackground ? '#FFFFFF' : theme.colors.primary),
+        color: textColor || (hasBackground ? theme.colors.text : theme.colors.primary),
         fontSize: sizeStyles.fontSize,
         fontWeight: '600',
         marginLeft: icon && iconPosition === 'left' ? 8 : 0,
@@ -161,14 +193,14 @@ export default function UIButton({
     const ButtonContent = () => (
         <>
             {isLoading ? (
-                <ActivityIndicator color={textColor || (hasBackground ? '#FFFFFF' : theme.colors.primary)} />
+                <ActivityIndicator color={textColor || (hasBackground ? theme.colors.text : theme.colors.primary)} />
             ) : (
                 <>
                     {icon && (
                         <Ionicons 
                             name={icon as any} 
                             size={sizeStyles.iconSize} 
-                            color={textColor || (hasBackground ? '#FFFFFF' : theme.colors.primary)} 
+                            color={textColor || (hasBackground ? theme.colors.text : theme.colors.primary)} 
                         />
                     )}
                     <Text style={[buttonTextStyles, textStyle]}>{buttonText}</Text>

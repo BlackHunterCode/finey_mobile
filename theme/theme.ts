@@ -31,6 +31,10 @@ export interface AppTheme {
     notification: string;
     dividerColor: string;
     error: string;
+    success: string;
+    warning: string;
+    info: string;
+    danger: string;
   },
   fonts: {
     regular: FontStyle;
@@ -48,7 +52,7 @@ export interface AppTheme {
 
 export const lightTheme: AppTheme = {
     colors: {
-        primary: '#6823D1',
+        primary: '#00c15aff',
         primaryGradient: ['#6823D1', '#46198B'],
         background: '#F1F0F5',
         card: '#ffffff',
@@ -57,7 +61,11 @@ export const lightTheme: AppTheme = {
         border: '#c7c7c7',
         notification: '#ff80ab',
         dividerColor: "#BFBFBF",
-        error: '#FF0000'
+        error: '#FF0000',
+        success: '#00FF00',
+        warning: '#FFFF00',
+        info: '#0000FF',
+        danger: '#FF0000',
       },
     fonts: {
         regular: { fontFamily: 'SF-PRO-DISPLAY-REGULAR', fontWeight: '400' },
@@ -100,8 +108,8 @@ export const lightTheme: AppTheme = {
 
 export const darkTheme: AppTheme = {
   colors: {
-    primary: '#A58BFF', // tom mais claro para melhor visibilidade no escuro
-    primaryGradient: ['#A58BFF', '#6A4ACF'],
+    primary: '#00ff77ff', // tom mais claro para melhor visibilidade no escuro
+    primaryGradient: ['#00ff77ff', '#00cc60ff'],
     background: '#121212',
     card: '#1E1E1E',
     text: '#FFFFFF',
@@ -109,7 +117,11 @@ export const darkTheme: AppTheme = {
     border: '#3A3A3A',
     notification: '#FF80AB',
     dividerColor: "#3D3D3D",
-    error: '#FF6B6B'
+    error: '#FF6B6B',
+    success: '#00FF00',
+    warning: '#FFFF00',
+    info: '#0000FF',
+    danger: '#FF0000',
   },
   fonts: {
     regular: { fontFamily: 'SF-PRO-DISPLAY-REGULAR', fontWeight: '400' },

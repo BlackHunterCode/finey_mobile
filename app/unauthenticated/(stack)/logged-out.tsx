@@ -18,6 +18,72 @@ export default function LoggedOutScreen() {
         router.push("./register/register");
     };
 
+    
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+        },
+        content: {
+            flex: 1,
+            padding: 24,
+            justifyContent: 'space-between',
+        },
+        logoContainer: {
+            alignItems: 'center',
+            marginTop: 60,
+        },
+        logo: {
+            width: 120,
+            height: 120,
+            marginBottom: 16,
+        },
+        title: {
+            fontSize: 32,
+            fontWeight: 'bold',
+            marginBottom: 8,
+            textAlign: 'center',
+        },
+        subtitle: {
+            fontSize: 16,
+            textAlign: 'center',
+            maxWidth: '80%',
+            lineHeight: 24,
+        },
+        buttonsContainer: {
+            width: '100%',
+            marginBottom: 40,
+        },
+        primaryButton: {
+            width: '100%',
+            height: 56,
+            borderRadius: 12,
+            overflow: 'hidden',
+            marginBottom: 16,
+        },
+        gradient: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        primaryButtonText: {
+            color: isDark ? theme.colors.background : theme.colors.text, 
+            fontSize: 16,
+            fontWeight: '600',
+        },
+        secondaryButton: {
+            width: '100%',
+            height: 56,
+            borderRadius: 12,
+            borderWidth: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        secondaryButtonText: {
+            fontSize: 16,
+            fontWeight: '600',
+        }
+    });
+
     return (
         <>
             <Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: theme.colors.background } }} />
@@ -25,7 +91,7 @@ export default function LoggedOutScreen() {
                 <View style={styles.content}>
                     <View style={styles.logoContainer}>
                         <View style={[styles.logo, { backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
-                            <WRText style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>FN</WRText>
+                            <WRText style={{ color: isDark ? theme.colors.background : theme.colors.text, fontSize: 32, fontWeight: 'bold' }}>FN</WRText>
                         </View>
                         <WRText style={[styles.title, { color: theme.colors.primary }]}>
                             Finey
@@ -68,68 +134,3 @@ export default function LoggedOutScreen() {
         </>
     )
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    content: {
-        flex: 1,
-        padding: 24,
-        justifyContent: 'space-between',
-    },
-    logoContainer: {
-        alignItems: 'center',
-        marginTop: 60,
-    },
-    logo: {
-        width: 120,
-        height: 120,
-        marginBottom: 16,
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        textAlign: 'center',
-    },
-    subtitle: {
-        fontSize: 16,
-        textAlign: 'center',
-        maxWidth: '80%',
-        lineHeight: 24,
-    },
-    buttonsContainer: {
-        width: '100%',
-        marginBottom: 40,
-    },
-    primaryButton: {
-        width: '100%',
-        height: 56,
-        borderRadius: 12,
-        overflow: 'hidden',
-        marginBottom: 16,
-    },
-    gradient: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    primaryButtonText: {
-        color: 'white', 
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    secondaryButton: {
-        width: '100%',
-        height: 56,
-        borderRadius: 12,
-        borderWidth: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    secondaryButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-    }
-});

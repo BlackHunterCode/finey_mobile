@@ -41,6 +41,15 @@ export default function TabsLayout() {
                     }}
                 />
                 <Tabs.Screen
+                    name="finance"
+                    options={{
+                        title: 'Finanças',
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="wallet-outline" size={size} color={color} />
+                        )
+                    }}
+                />
+                <Tabs.Screen
                     name="learn"
                     options={{
                         title: 'Aprenda',
@@ -53,15 +62,6 @@ export default function TabsLayout() {
                     name="configuration"
                     options={{
                         title: 'Configurações',
-                        tabBarIcon: ({ color, size }) => (
-                            <Ionicons name="settings-outline" size={size} color={color} />
-                        )
-                    }}
-                />
-                <Tabs.Screen
-                    name="teste"
-                    options={{
-                        title: 'Teste',
                         tabBarIcon: ({ color, size }) => (
                             <Ionicons name="settings-outline" size={size} color={color} />
                         )
