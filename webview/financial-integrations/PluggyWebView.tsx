@@ -3,8 +3,9 @@ import AuthResponse from '@/types/AuthResponse';
 import FinancialIntegratorWebView from '@/types/FinancialIntegratorWebView';
 import { ExecutionStatus, Item as PluggyItem } from 'pluggy-js';
 import { JSX, useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ConnectEventPayload, PluggyConnect } from 'react-native-pluggy-connect';
+import { useAppTheme } from '@/context/theme-context';
 interface Item extends Omit<PluggyItem, 'connector'> {
   id: string;
   status: 'UPDATING' | 'UPDATED' | 'LOGIN_ERROR' | 'OUTDATED' | 'WAITING_USER_INPUT';
@@ -43,6 +44,7 @@ const PluggyConnectComponent: React.FC<{
   onSuccess: (itemId: string) => void;
   onError?: (error: any) => void;
 }> = ({ authObject, connectToken, onSuccess, onError }) => {
+  const { theme } = useAppTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [loadingText, setLoadingText] = useState('Integrando...');
   const [loadingSubtext, setLoadingSubtext] = useState<null | string> (null);
@@ -473,7 +475,7 @@ const PluggyConnectComponent: React.FC<{
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }] }>
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
@@ -566,7 +568,7 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     backgroundColor: '#fff',
-    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    marginTop: 0,
   },
   closeButton: {
     position: 'absolute',

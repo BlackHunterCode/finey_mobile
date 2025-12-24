@@ -3,7 +3,7 @@ import { Props } from "@/types/JSXTypes";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
+import { DimensionValue, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import WRText from "../wrappers/WRText";
 
@@ -12,6 +12,7 @@ import WRText from "../wrappers/WRText";
  */
 interface CardProps extends Props {
     fullWidth?: boolean;
+    width?: DimensionValue | undefined;
 
     /**
      * Configurações do Accordion 
@@ -42,7 +43,7 @@ interface CardProps extends Props {
  * @author Victor Barberino
  */
 export default function UICard({ 
-        children, style, fullWidth=false, 
+        children, style, fullWidth=false, width = undefined,
         activeAccordion=false, accordionTitle="", accordionBeOpenDefault=false, useDividerInAccordion=false,
         openStack=false, href="", onPress,
         showProgressBar=false, progressValue=0
@@ -50,6 +51,7 @@ export default function UICard({
     const { theme } = useAppTheme();
 
     /** Estados */
+    const [cardWidth, setCardWidth] = useState(width);
     const [withFullWidth, setWithFullWidth] = useState(false);
     const [withActiveAccordion, setWithActiveAccordion] = useState(false);
     const [accordionOpen, setAccordionOpen] = useState(false);
@@ -64,6 +66,7 @@ export default function UICard({
      * Inicializa o estado do componente a partir das props
      */
     useEffect(() => {
+        setCardWidth(width);
         setWithFullWidth(fullWidth);
         setWithActiveAccordion(activeAccordion);
         setAccordionOpen(accordionBeOpenDefault);
@@ -158,7 +161,7 @@ export default function UICard({
         shadowOpacity: 0.15,
         shadowRadius: 2.5,
         elevation: 3,
-        width: withFullWidth ? '100%' : 'auto',
+        width: cardWidth || (withFullWidth ? '100%' : 'auto'),
     };
     
     const componentStyle = StyleSheet.create({

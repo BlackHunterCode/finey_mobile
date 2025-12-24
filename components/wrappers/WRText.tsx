@@ -9,17 +9,17 @@ const WRText = forwardRef<React.ComponentRef<typeof RNText>, TextProps>((props, 
       ref={ref}
       {...props}
       style={[
-        { 
-          fontFamily: theme.fonts.regular.fontFamily, 
+        {
+          fontFamily: theme.fonts.regular.fontFamily,
           fontWeight: theme.fonts.regular.fontWeight,
           includeFontPadding: false,
           textAlignVertical: 'center',
           color: theme.colors.text,
-        }, 
+        },
         props.style
       ]}
     />
   );
 });
-
+WRText.displayName = 'WRText';
 export default WRText;
